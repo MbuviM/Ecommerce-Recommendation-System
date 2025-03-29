@@ -1,2 +1,5 @@
 *.jpg
 *.gitignore
+
+# Large dataset files
+datasets/*.csv
