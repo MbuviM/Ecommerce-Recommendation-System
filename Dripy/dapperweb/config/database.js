@@ -1,4 +1,4 @@
-import { db } from './firebase';
+import { db, storage } from './firebase';
 import { 
   collection, 
   doc, 
@@ -10,6 +10,7 @@ import {
   orderBy,
   limit
 } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // Collections
 const COLLECTIONS = {
@@ -33,13 +34,36 @@ const createUser = async (userId, userData) => {
 };
 
 // Product Schema
-const createProduct = async (productId, productData) => {
-  const productRef = doc(db, COLLECTIONS.PRODUCTS, productId);
-  await setDoc(productRef, {
-    ...productData,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  });
+const uploadProductImage = async (file, productId) => {
+  try {
+    const storageRef = ref(storage, `products/${productId}/${file.name}`);
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error;
+  }
+};
+
+const createProduct = async (productId, productData, imageFile) => {
+  try {
+    let imageUrl = null;
+    if (imageFile) {
+      imageUrl = await uploadProductImage(imageFile, productId);
+    }
+    
+    const productRef = doc(db, COLLECTIONS.PRODUCTS, productId);
+    await setDoc(productRef, {
+      ...productData,
+      imageUrl: imageUrl || productData.imageUrl,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+  } catch (error) {
+    console.error('Error creating product:', error);
+    throw error;
+  }
 };
 
 // Order Schema
@@ -106,6 +130,56 @@ const getUserOrders = async (userId) => {
   }));
 };
 
+// Add to Cart Function
+const addToCart = async (userId, productId, quantity = 1) => {
+  try {
+    const cartRef = doc(db, COLLECTIONS.CART, userId);
+    const cartDoc = await getDoc(cartRef);
+    
+    let cartData = { items: [] };
+    if (cartDoc.exists()) {
+      cartData = cartDoc.data();
+    }
+    
+    const existingItemIndex = cartData.items.findIndex(item => item.productId === productId);
+    
+    if (existingItemIndex >= 0) {
+      cartData.items[existingItemIndex].quantity += quantity;
+    } else {
+      cartData.items.push({ productId, quantity });
+    }
+    
+    await updateCart(userId, cartData.items);
+    return true;
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    throw error;
+  }
+};
+
+// Enhanced Image Search Function
+const searchByImageUrl = async (imageUrl) => {
+  try {
+    const response = await fetch('/api/image-search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ imageUrl }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Image search failed');
+    }
+    
+    const data = await response.json();
+    return data.recommendations;
+  } catch (error) {
+    console.error('Error searching by image:', error);
+    throw error;
+  }
+};
+
 export {
   COLLECTIONS,
   createUser,
@@ -115,5 +189,8 @@ export {
   updateFavorites,
   logAnalytics,
   getProducts,
-  getUserOrders
+  getUserOrders,
+  uploadProductImage,
+  addToCart,
+  searchByImageUrl
 }; 
