@@ -1,4 +1,4 @@
-import { db } from '../Firebase';
+import { db } from './firebase';
 import { 
   collection, 
   doc, 
@@ -25,10 +25,17 @@ const COLLECTIONS = {
 // Product Schema
 const createProduct = async (productId, productData, imageFile) => {
   try {
+    console.log('Starting product creation...');
+    console.log('Product data:', productData);
+    console.log('Image file:', imageFile);
+
     // Upload image to Cloudinary
     const formData = new FormData();
     formData.append('file', imageFile);
     formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
+
+    console.log('Cloudinary upload URL:', `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`);
+    console.log('Upload preset:', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
 
     const response = await fetch(
       `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -38,11 +45,16 @@ const createProduct = async (productId, productData, imageFile) => {
       }
     );
 
+    console.log('Cloudinary response status:', response.status);
+    
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Cloudinary error response:', errorText);
       throw new Error('Failed to upload image to Cloudinary');
     }
 
     const imageData = await response.json();
+    console.log('Cloudinary upload success:', imageData);
     const imageUrl = imageData.secure_url;
 
     // Create product with image URL
@@ -54,6 +66,7 @@ const createProduct = async (productId, productData, imageFile) => {
       updatedAt: new Date()
     });
 
+    console.log('Product created successfully in Firestore');
     return productId;
   } catch (error) {
     console.error('Error creating product:', error);
