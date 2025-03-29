@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createProduct, uploadProductImage } from '@/config/database';
+import { createProduct } from '@/config/database';
 import styles from './product-upload.module.css';
 
 const ProductUpload = () => {
@@ -45,6 +45,10 @@ const ProductUpload = () => {
     setError(null);
 
     try {
+      if (!imageFile) {
+        throw new Error('Please select an image');
+      }
+
       const productId = `product_${Date.now()}`;
       await createProduct(productId, productData, imageFile);
       
@@ -60,8 +64,8 @@ const ProductUpload = () => {
       setImageFile(null);
       alert('Product added successfully!');
     } catch (error) {
-      setError('Failed to add product. Please try again.');
       console.error('Product upload error:', error);
+      setError(error.message || 'Failed to add product. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -110,19 +114,14 @@ const ProductUpload = () => {
 
         <div className={styles.formGroup}>
           <label htmlFor="category">Category</label>
-          <select
+          <input
+            type="text"
             id="category"
             name="category"
             value={productData.category}
             onChange={handleInputChange}
             required
-          >
-            <option value="">Select Category</option>
-            <option value="apparel">Apparel</option>
-            <option value="footwear">Footwear</option>
-            <option value="accessories">Accessories</option>
-            <option value="sporting">Sporting Goods</option>
-          </select>
+          />
         </div>
 
         <div className={styles.formGroup}>

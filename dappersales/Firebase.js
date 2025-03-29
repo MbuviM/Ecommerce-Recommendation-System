@@ -11,13 +11,13 @@ import {getStorage} from 'firebase/storage'
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyAmFe4_zOoo34MPl9T9HDG91nl8oEA1jo8",
-  authDomain: "dripy-e1420.firebaseapp.com",
-  projectId: "dripy-e1420",
-  storageBucket: "dripy-e1420.appspot.com",
-  messagingSenderId: "270889450216",
-  appId: "1:270889450216:web:9b9d1c544072f35df7275d",
-  measurementId: "G-1NLPYJVY64"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase

@@ -1,23 +1,38 @@
 import { db, auth } from "@/config/firebase";
 import { useState, useEffect } from "react";
 
-const useCart = (id) => {
-  const [data, setData] = useState([]);
+const useCart = () => {
+  const [data, setData] = useState({ items: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchFromFirestore() {
-      auth.currentUser &&
-        db
-          .collection("Users")
-          .doc(auth.currentUser?.uid)
-          .onSnapshot(function (doc) {
-            setData(doc.data().cart);
-          });
+    if (!auth.currentUser) {
+      setData({ items: [] });
+      setLoading(false);
+      return;
     }
 
-    fetchFromFirestore();
+    const unsubscribe = db
+      .collection("Users")
+      .doc(auth.currentUser.uid)
+      .onSnapshot(
+        (doc) => {
+          if (doc.exists()) {
+            setData(doc.data().cart || { items: [] });
+          } else {
+            setData({ items: [] });
+          }
+          setLoading(false);
+        },
+        (error) => {
+          console.error("Error fetching cart:", error);
+          setError(error);
+          setLoading(false);
+        }
+      );
+
+    return () => unsubscribe();
   }, [auth.currentUser]);
 
   return {
@@ -56,4 +71,5 @@ const useCartOnce = (id) => {
   };
 };
 
-export { useCart, useCartOnce };
+export default useCart;
+export { useCartOnce };

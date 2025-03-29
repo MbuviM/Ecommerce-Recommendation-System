@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "chart.js": "^4.4.8",
+    "cloudinary": "^2.6.0",
     "firebase": "^9.9.2",
     "next": "12.2.3",
     "plotly.js": "^1.47.4",
