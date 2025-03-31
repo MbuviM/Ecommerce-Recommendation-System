@@ -5,12 +5,16 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 // Create a hook for cart management that works for both logged-in and anonymous users
 export default function useCart() {
-  const [cart, setCart] = useState({});
+  const [cart, setCart] = useState(() => {
+  if (typeof window === 'undefined') return {};
+  return JSON.parse(localStorage.getItem('anonymousCart') || '{}');
+});
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
   // Initialize cart
   useEffect(() => {
+  if (typeof window === 'undefined') return;
     console.log("useCart hook initializing");
     
     // First check localStorage for anonymous users

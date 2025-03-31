@@ -66,9 +66,11 @@ export default function ProductCard({
         {image && <img className={styles.image} src={image} loading="lazy" />}
       </div>
       <div className={styles.textContainer}>
-        <Link href={`/brand/${brand}`}>
-          <h4 className={styles.brandText}>{brand}</h4>
-        </Link>
+        <div className={styles.brandWrapper}>
+          <Link href={`/brand/${brand}`}>
+            <a className={styles.brandLink}>{brand}</a>
+          </Link>
+        </div>
         <h4>{name}</h4>
         {sale_price ? (
           <div className={styles.priceContainer}>

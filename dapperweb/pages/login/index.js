@@ -20,10 +20,25 @@ export default function LoginPage() {
       const authInstance = getAuth();
       console.log("Auth instance:", authInstance ? "Valid" : "Invalid");
       
+      // Store a flag in sessionStorage to track if this is an intentional login attempt
+      // This helps prevent immediate redirects when a user is trying to log out
+      if (typeof window !== "undefined" && router.query.redirect === "true") {
+        sessionStorage.setItem("intentionalLogin", "true");
+      }
+      
+      const isIntentionalLogin = typeof window !== "undefined" && 
+                               (router.query.redirect === "true" || 
+                                sessionStorage.getItem("intentionalLogin") === "true");
+      
       const unsubscribe = onAuthStateChanged(authInstance, (user) => {
         console.log("Auth state changed:", user ? `User: ${user.uid}` : "No user");
-        if (user) {
+        
+        // Only redirect if user exists AND this isn't an intentional login/logout attempt
+        if (user && !isIntentionalLogin) {
           router.push("/");
+        } else if (!user && typeof window !== "undefined") {
+          // If no user, clear the intentional login flag
+          sessionStorage.removeItem("intentionalLogin");
         }
       });
       

@@ -47,9 +47,13 @@ export default function Header() {
               width={30}
               height={30}
               className={styles.menuIcon}
-              onClick={() =>
-                setShowHeader({ transform: "translate3d(0vw, 0, 0)" })
-              }
+              onClick={() => {
+                if (!user) {
+                  router.push('/login?redirect=true');
+                } else {
+                  setShowHeader({ transform: "translate3d(0vw, 0, 0)" });
+                }
+              }}
             />
           </div>
         </div>
@@ -139,8 +143,8 @@ export default function Header() {
                   </>
                 ) : (
                   <>
-                    <Link href="/login">Login</Link>
-                    <Link href="/login">Register</Link>
+                    <Link href="/login?redirect=true">Login</Link>
+                    <Link href="/login?redirect=true">Register</Link>
                   </>
                 )}
               </div>

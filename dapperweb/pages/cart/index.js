@@ -2,7 +2,8 @@ import Head from "next/head";
 import styles from "./cart.module.scss";
 
 import Layout from "components/Layout";
-import CartItem from "@/components/CartItem";
+import dynamic from 'next/dynamic';
+const CartItem = dynamic(() => import('@/components/CartItem'), { ssr: false });
 import { useCart, useCartOnce } from "hooks/cart.hook";
 import React, { useEffect, useState } from "react";
 import { auth, db } from "@/config/firebase";
@@ -13,7 +14,7 @@ import { useRouter } from "next/router";
 
 export default function CartPage() {
   const { user, loading } = useAuth();
-  const { data = {} } = useCart();
+  const { data = {} } = typeof window !== 'undefined' ? useCart() || {} : {};
   const [clientData, setClientData] = useState({});
   useEffect(() => {
     setClientData(data);
@@ -44,16 +45,19 @@ export default function CartPage() {
     {}
   );
 
-  const cartItemsArray = [
-    ...new Set(
-      cartItems.filter(
-        (v, i, a) =>
-          a.findIndex((t) => t.name === v.name && t.size === v.size) === i
+  const cartItemsArray = cartItems.length > 0 
+  ? [
+      ...new Set(
+        cartItems.filter(
+          (v, i, a) =>
+            a.findIndex((t) => t.name === v.name && t.size === v.size) === i
+        )
       )
-    ),
-  ].map((item) => {
-    return { ...item, count: sizeCount[item.name + "__size__" + item.size] };
-  });
+    ].map((item) => ({
+      ...item,
+      count: sizeCount[item.name + "__size__" + item.size] || 0
+    }))
+  : [];
 
   const addCartEvent = (id, size) => {
     const newCart = size

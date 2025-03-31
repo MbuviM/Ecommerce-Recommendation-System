@@ -26,7 +26,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <Link href={`/product/${product.id}`} className={styles.productCard}>
+    <div className={styles.productCard} onClick={goToProductPage}>
       <div className={styles.imageContainer}>
         <img 
           src={product.imageUrl || '/african-default.jpg'} 
@@ -44,7 +44,7 @@ const ProductCard = ({ product }) => {
           {isInCart ? `Add More (${currentQuantity} in cart)` : 'Add to Cart'}
         </button>
       </div>
-    </Link>
+    </div>
   );
 };
 

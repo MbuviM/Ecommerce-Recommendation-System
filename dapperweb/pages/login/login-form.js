@@ -41,7 +41,11 @@ export default function LoginForm() {
       
       // If login is successful, redirect to home page
       console.log("Login successful, redirecting to home");
-      router.push("/");
+      
+      // Add a small delay before redirecting to ensure the user sees the success state
+      setTimeout(() => {
+        router.push("/");
+      }, 1000); // 1 second delay
     } catch (error) {
       console.error("Login form error:", error.message);
       setLoginError(error.message);

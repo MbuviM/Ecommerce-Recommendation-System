@@ -10,9 +10,13 @@ export default function CartItem({ id, size, count, onAdd }) {
   // console.log(data.date);
   const { data } = useProduct(id);
 
+  if(typeof window === 'undefined') return null;
+
   return (
     <div className={styles.container}>
-      <img src={data?.cover_photo} className={styles.image} loading="lazy" />
+      {data?.cover_photo && (
+        <img src={data.cover_photo} className={styles.image} loading="lazy" />
+      )}
       <div className={styles.textContainer}>
         <h4>{data?.product_name || ""}</h4>
         <span>Size: {size || "-"}</span>
