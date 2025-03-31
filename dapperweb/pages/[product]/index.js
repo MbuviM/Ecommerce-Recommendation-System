@@ -3,7 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 // import fetch from 'node-fetch';
 
-import { db, firebase } from "@/config/firebase";
+import { db, firebase } from "@/firebase/config";
 import { useAuth } from "@/firebase/context";
 import { useCart } from "hooks/cart.hook";
 import { removeFavorite, addFavorite, addToCart } from "@/firebase/product";

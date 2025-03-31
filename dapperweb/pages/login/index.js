@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import styles from "./login.module.scss";
 import LoginForm from "./login-form";
@@ -8,19 +9,37 @@ import { auth } from "../../config/firebase";
 
 export default function LoginPage() {
   const [page, setPage] = useState("login");
-
   const router = useRouter();
 
-  auth.onAuthStateChanged(function (user) {
-    if (user) {
-      console.log(user);
-      typeof window !== "undefined" && router.push("/");
+  useEffect(() => {
+    console.log("Setting up auth state listener");
+    
+    // Create a safety wrapper for auth state listener
+    try {
+      // Get auth directly to avoid potential issues with imported auth
+      const authInstance = getAuth();
+      console.log("Auth instance:", authInstance ? "Valid" : "Invalid");
+      
+      const unsubscribe = onAuthStateChanged(authInstance, (user) => {
+        console.log("Auth state changed:", user ? `User: ${user.uid}` : "No user");
+        if (user) {
+          router.push("/");
+        }
+      });
+      
+      return () => {
+        console.log("Cleaning up auth state listener");
+        unsubscribe();
+      };
+    } catch (error) {
+      console.error("Error in auth state listener setup:", error);
+      return () => {}; // Return empty cleanup function
     }
-  });
+  }, [router]);
 
   return (
     <div className={styles.container}>
-      <a className={styles.logo}>Shopping</a>
+      <a className={styles.logo}>Dapper Wear</a>
       <div className={styles.content}>
         <div className={styles.switchContainer}>
           <button

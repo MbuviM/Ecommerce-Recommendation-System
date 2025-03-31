@@ -1,10 +1,8 @@
 import React from "react";
 import { db } from "@/config/firebase";
-
+import { collection, query, where, getDocs } from "firebase/firestore";
 import Head from "next/head";
-
 import styles from "./brand.module.scss";
-
 import Layout from "components/Layout";
 import Button from "@/components/FilterButton";
 import ProductCard from "@/components/ProductCard/product-card";
@@ -55,22 +53,25 @@ export default function BrandPage({ data, query }) {
 }
 
 BrandPage.getInitialProps = async function ({ query }) {
-  let data = {};
-  let error = {};
-  await db
-    .collection("Products")
-    .where("brand", "==", query.brand)
-    .get()
-    .then(function (querySnapshot) {
-      data = querySnapshot.docs.map(function (doc) {
-        return { id: doc.id, ...doc.data() };
-      });
-    })
-    .catch((e) => (error = e));
+  try {
+    const productsRef = collection(db, "Products");
+    const q = query(productsRef, where("brand", "==", query.brand));
+    const querySnapshot = await getDocs(q);
+    const data = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
-  return {
-    data,
-    error,
-    query,
-  };
+    return {
+      data,
+      query,
+    };
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return {
+      data: [],
+      error,
+      query,
+    };
+  }
 };

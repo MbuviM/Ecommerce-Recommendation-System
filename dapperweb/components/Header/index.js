@@ -8,8 +8,8 @@ import CartIcon from "@/icons/cart";
 import ArrowIcon from "@/icons/arrow";
 
 import { useAuth } from "@/firebase/context";
-import { db, auth } from "@/config/firebase";
-import { useCart } from "hooks/cart.hook";
+import { db, auth } from "@/firebase/config";
+import useCart from "@/hooks/cart.hook";
 import { useRouter } from "next/router";
 import MenuIcon from "@/icons/menu";
 import CameraIcon from "@/icons/camera";
@@ -24,8 +24,8 @@ export default function Header() {
 
   const { user } = useAuth();
 
-  const cart = useCart().data;
-  const cartLength = Object.keys(cart).reduce((a, b) => a + cart[b].length, 0);
+  const { data: cart } = useCart();
+  const cartLength = cart?.items?.length || 0;
 
   return (
     <nav className={styles.container}>
@@ -38,7 +38,7 @@ export default function Header() {
             <div className={styles.cartContainer}>
               <CartIcon width={28} height={28} className={styles.cartIcon} />
               <div>
-                <span>{cartLength || 0}</span>
+                <span>{cartLength}</span>
               </div>
             </div>
           </Link>
@@ -99,7 +99,6 @@ export default function Header() {
         </form>
       </div>
       <div className={styles.rightContent}>
-
         <Link href="/imageSearch">
           <div className={styles.cartContainer} >
             <CameraIcon width={20} height={20} className={styles.cartIcon} />
@@ -110,7 +109,7 @@ export default function Header() {
         <Link href="/cart">
           <div className={styles.cartContainer}>
             <CartIcon width={20} height={20} className={styles.cartIcon} />
-            <span>Cart: {cartLength || 0}</span>
+            <span>Cart: {cartLength}</span>
           </div>
         </Link>
 

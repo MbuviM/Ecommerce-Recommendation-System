@@ -2,23 +2,26 @@ import { db } from "@/config/firebase";
 import { useState, useEffect } from "react";
 
 const useProduct = (id) => {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchFromFirestore() {
+    if (id) {
       db.collection("Products")
         .doc(id)
         .get()
-        .then(function (doc) {
-          setData(doc.data());
+        .then((doc) => {
+          if (doc.exists) {
+            setData(doc.data());
+          }
           setLoading(false);
         })
-        .catch((e) => setError(e));
+        .catch((e) => {
+          setError(e);
+          setLoading(false);
+        });
     }
-
-    fetchFromFirestore();
   }, [id]);
 
   return {
@@ -34,21 +37,23 @@ const useCategoryProducts = (category) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchFromFirestore() {
+    if (category) {
       db.collection("Products")
-        .where("category", "==", category)
+        .where("masterCategory", "==", category)
         .get()
-        .then(function (querySnapshot) {
-          const products = querySnapshot.docs.map(function (doc) {
-            return { id: doc.id, ...doc.data() };
-          });
+        .then((querySnapshot) => {
+          const products = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+          }));
           setData(products);
           setLoading(false);
         })
-        .catch((e) => setError(e));
+        .catch((e) => {
+          setError(e);
+          setLoading(false);
+        });
     }
-
-    fetchFromFirestore();
   }, [category]);
 
   return {
@@ -58,4 +63,5 @@ const useCategoryProducts = (category) => {
   };
 };
 
-export { useProduct, useCategoryProducts };
+export default useProduct;
+export { useCategoryProducts };

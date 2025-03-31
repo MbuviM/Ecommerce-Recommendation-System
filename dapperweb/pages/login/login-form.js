@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { useRouter } from "next/router";
 
 import Input from "@/components/Input";
 import Button from "@/components/Button";
 import Link from "next/link";
-import SocialMediaButton from "@/components/SocialMediaButton";
-import emailLogin from "firebase/login";
-import googleAuth from "firebase/google-auth";
+import emailLogin from "../../firebase/login";
 
 const schema = yup.object().shape({
   email: yup.string().email().required("* Email is required."),
@@ -20,16 +19,37 @@ const schema = yup.object().shape({
 
 export default function LoginForm() {
   const [loginError, setLoginError] = useState();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const router = useRouter();
 
-  const { register, handleSubmit, watch, errors } = useForm({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     resolver: yupResolver(schema),
+    mode: "onChange",
   });
 
-  const onSubmit = (data) => {
-    emailLogin({ email: data.email, password: data.password }).catch((e) =>
-      setLoginError(e.message)
-    );
+  const onSubmit = async (data) => {
+    try {
+      setIsLoggingIn(true);
+      setLoginError(null);
+      
+      console.log("Login form submitted with email:", data.email);
+      await emailLogin({ email: data.email, password: data.password });
+      
+      // If login is successful, redirect to home page
+      console.log("Login successful, redirecting to home");
+      router.push("/");
+    } catch (error) {
+      console.error("Login form error:", error.message);
+      setLoginError(error.message);
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -39,9 +59,9 @@ export default function LoginForm() {
         name="email"
         register={register}
         placeholder="E-mail"
-        error={errors.email}
+        error={errors?.email}
       />
-      {errors.email && (
+      {errors?.email && (
         <span style={{ color: "red", marginTop: 4, fontSize: 14 }}>
           {errors.email.message}
         </span>
@@ -52,57 +72,35 @@ export default function LoginForm() {
         register={register}
         placeholder="Password"
         type="password"
-        error={errors.password}
+        error={errors?.password}
       />
-      {errors.password && (
+      {errors?.password && (
         <span style={{ color: "red", marginTop: 4, fontSize: 14 }}>
           {errors.password.message}
         </span>
       )}
 
-      <Button type="submit">Login</Button>
+      <Button type="submit" disabled={isLoggingIn}>
+        {isLoggingIn ? "Logging In..." : "Login"}
+      </Button>
+      
       {loginError && (
         <span
           style={{
             color: "red",
-            marginTop: -10,
+            marginTop: 10,
             fontSize: 14,
             marginBottom: 10,
+            textAlign: "center"
           }}
         >
           {loginError}
         </span>
       )}
+      
       <span style={{ fontWeight: "bold", marginBottom: 60 }}>
         <Link href="/forgot-password">Forgot Password?</Link>
       </span>
-
-        {/* Social Media Buttons 
-      <hr style={{ width: "100%", height: 1, color: "#f6f6f655" }} />
-      <span
-        style={{
-          textAlign: "center",
-          marginTop: -35,
-          padding: 15,
-          backgroundColor: "white",
-          display: "flex",
-          alignSelf: "center",
-          width: "max-content",
-          fontWeight: "500",
-        }}
-      >
-        Login with social media
-      </span>
-      <div style={{ display: "flex" }}>
-        <SocialMediaButton
-          style={{ marginRight: 20 }}
-          icon="google"
-          onClick={googleAuth}
-        >
-          Google
-        </SocialMediaButton>
-        <SocialMediaButton icon="apple">Apple</SocialMediaButton>
-      </div> */}
     </form>
   );
 }

@@ -1,4 +1,4 @@
-import { firebase, auth, db } from "../config/firebase";
+import { firebase, auth, db } from "@/firebase/config";
 
 function addFavorite(id) {
   const currentUser = auth.currentUser.uid;
@@ -22,29 +22,10 @@ function removeFavorite(id) {
     });
 }
 
-function addToCart(productId, quantity = 1) {
-  const currentUser = auth.currentUser;
-  if (!currentUser) {
-    throw new Error('User must be logged in to add items to cart');
-  }
+function addToCart(newCart) {
+  const currentUser = auth.currentUser.uid;
 
-  return db.collection("Users").doc(currentUser.uid).get().then(doc => {
-    const userData = doc.data();
-    const cart = userData.cart || { items: [] };
-    
-    const existingItemIndex = cart.items.findIndex(item => item.productId === productId);
-    
-    if (existingItemIndex >= 0) {
-      cart.items[existingItemIndex].quantity += quantity;
-    } else {
-      cart.items.push({ productId, quantity });
-    }
-    
-    return db.collection("Users").doc(currentUser.uid).update({
-      cart,
-      updatedAt: new Date()
-    });
+  return db.collection("Users").doc(currentUser).update({
+    cart: newCart,
   });
 }
-
-export { addFavorite, removeFavorite, addToCart };

@@ -1,75 +1,148 @@
-import { db, auth } from "@/config/firebase";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/firebase/context";
+import { db } from "@/firebase/config";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  onSnapshot,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 
-const useCart = () => {
-  const [data, setData] = useState({ items: [] });
+export function useCart() {
+  const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { currentUser } = useAuth();
 
   useEffect(() => {
-    if (!auth.currentUser) {
-      setData({ items: [] });
+    if (!currentUser) {
+      setCart([]);
       setLoading(false);
       return;
     }
 
-    const unsubscribe = db
-      .collection("Users")
-      .doc(auth.currentUser.uid)
-      .onSnapshot(
-        (doc) => {
-          if (doc.exists()) {
-            setData(doc.data().cart || { items: [] });
-          } else {
-            setData({ items: [] });
-          }
-          setLoading(false);
-        },
-        (error) => {
-          console.error("Error fetching cart:", error);
-          setError(error);
-          setLoading(false);
-        }
-      );
+    const cartRef = doc(db, "carts", currentUser.uid);
+    const unsubscribe = onSnapshot(cartRef, (doc) => {
+      if (doc.exists()) {
+        setCart(doc.data().items || []);
+      } else {
+        setCart([]);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching cart:", error);
+      setError(error);
+      setLoading(false);
+    });
 
     return () => unsubscribe();
-  }, [auth.currentUser]);
+  }, [currentUser]);
 
-  return {
-    data,
-    loading,
-    error,
-  };
-};
-
-const useCartOnce = (id) => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  console.log("once");
-
-  useEffect(() => {
-    async function fetchFromFirestore() {
-      console.log("once inner");
-
-      db.collection("Users")
-        .doc(auth.currentUser?.uid)
-        .get()
-        .then(function (doc) {
-          setData(doc.data().cart);
-          setLoading(false);
-        })
-        .catch((e) => setError(e));
+  const addToCart = async (product) => {
+    if (!currentUser) {
+      setError("Please login to add items to cart");
+      return;
     }
-    auth.currentUser?.uid && fetchFromFirestore();
-  }, [auth.currentUser]);
+
+    try {
+      const cartRef = doc(db, "carts", currentUser.uid);
+      const cartDoc = await getDoc(cartRef);
+      
+      if (cartDoc.exists()) {
+        const currentCart = cartDoc.data().items || [];
+        const existingItem = currentCart.find(item => item.id === product.id);
+        
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          currentCart.push({ ...product, quantity: 1 });
+        }
+        
+        await setDoc(cartRef, { items: currentCart });
+      } else {
+        await setDoc(cartRef, { items: [{ ...product, quantity: 1 }] });
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      setError(error);
+    }
+  };
+
+  const removeFromCart = async (productId) => {
+    if (!currentUser) {
+      setError("Please login to remove items from cart");
+      return;
+    }
+
+    try {
+      const cartRef = doc(db, "carts", currentUser.uid);
+      const cartDoc = await getDoc(cartRef);
+      
+      if (cartDoc.exists()) {
+        const currentCart = cartDoc.data().items || [];
+        const updatedCart = currentCart.filter(item => item.id !== productId);
+        await setDoc(cartRef, { items: updatedCart });
+      }
+    } catch (error) {
+      console.error("Error removing from cart:", error);
+      setError(error);
+    }
+  };
+
+  const updateQuantity = async (productId, quantity) => {
+    if (!currentUser) {
+      setError("Please login to update cart");
+      return;
+    }
+
+    try {
+      const cartRef = doc(db, "carts", currentUser.uid);
+      const cartDoc = await getDoc(cartRef);
+      
+      if (cartDoc.exists()) {
+        const currentCart = cartDoc.data().items || [];
+        const updatedCart = currentCart.map(item => {
+          if (item.id === productId) {
+            return { ...item, quantity };
+          }
+          return item;
+        });
+        await setDoc(cartRef, { items: updatedCart });
+      }
+    } catch (error) {
+      console.error("Error updating cart:", error);
+      setError(error);
+    }
+  };
+
+  const clearCart = async () => {
+    if (!currentUser) {
+      setError("Please login to clear cart");
+      return;
+    }
+
+    try {
+      const cartRef = doc(db, "carts", currentUser.uid);
+      await setDoc(cartRef, { items: [] });
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      setError(error);
+    }
+  };
 
   return {
-    data,
+    cart,
     loading,
     error,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
   };
-};
+}
 
 export default useCart;
-export { useCartOnce };

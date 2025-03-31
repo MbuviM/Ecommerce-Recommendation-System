@@ -50,16 +50,26 @@ export default function AccountPage() {
   const [passwordError, setError] = useState(null);
   const [photo, setPhoto] = useState(null);
   const { user, loading } = useAuth();
+  const router = useRouter();
 
-  const { register, handleSubmit, watch, errors } = useForm({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     resolver: yupResolver(schema),
+    defaultValues: {
+      name: user?.name || "",
+      surname: user?.surname || "",
+      email: user?.email || "",
+      phone: user?.phoneNumber || "",
+    },
   });
 
   const {
     register: register2,
     handleSubmit: handleSubmit2,
-    errors: errors2,
-    getValues,
+    formState: { errors: errors2 },
   } = useForm({
     resolver: yupResolver(schema2),
   });
@@ -87,7 +97,15 @@ export default function AccountPage() {
       .catch((e) => setError(e.message));
   };
 
-  if (!user && !loading) useRouter().push("/login");
+  if (!user && !loading) {
+    router.push("/login");
+    return null;
+  }
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <Layout noCategories>
       <AccountSidebar />
@@ -105,10 +123,10 @@ export default function AccountPage() {
                   noMargin
                   register={register}
                   placeholder="Name"
-                  error={errors.name}
+                  error={errors?.name}
                 />
               </div>
-              {errors.name && (
+              {errors?.name && (
                 <span style={{ color: "red", marginTop: 4, fontSize: 14 }}>
                   {errors.name.message}
                 </span>
@@ -121,10 +139,10 @@ export default function AccountPage() {
                   noMargin
                   register={register}
                   placeholder="Surname"
-                  error={errors.surname}
+                  error={errors?.surname}
                 />
               </div>
-              {errors.surname && (
+              {errors?.surname && (
                 <span style={{ color: "red", marginTop: 4, fontSize: 14 }}>
                   {errors.surname.message}
                 </span>
@@ -137,45 +155,31 @@ export default function AccountPage() {
                   noMargin
                   register={register}
                   placeholder="E-mail"
-                  error={errors.email}
+                  error={errors?.email}
                 />
               </div>
-              {errors.email && (
+              {errors?.email && (
                 <span style={{ color: "red", marginTop: 4, fontSize: 14 }}>
                   {errors.email.message}
                 </span>
               )}
               <div className={styles.inputContainer}>
-                <span>Phone Number</span>
+                <span>Phone</span>
                 <Input
                   name="phone"
                   defaultValue={user?.phoneNumber}
                   noMargin
                   register={register}
-                  error={errors.phone}
+                  placeholder="Phone"
+                  error={errors?.phone}
                 />
               </div>
-              {errors.phone && (
+              {errors?.phone && (
                 <span style={{ color: "red", marginTop: 4, fontSize: 14 }}>
                   {errors.phone.message}
                 </span>
               )}
-              <div className={styles.inputContainer}>
-                <span>Profile Photo</span>
-
-                <label className={styles.uploadButton}>
-                  <input
-                    type="file"
-                    onChange={(e) => setPhoto(e.target.files[0])}
-                    accept="image/*"
-                    style={{ display: "none" }}
-                  />
-                  {photo?.name || "Select File"}
-                </label>
-              </div>
-              <Button type="submit" name="update_button" value="Update">
-                Update
-              </Button>
+              <Button type="submit">Save Changes</Button>
             </form>
           </div>
           <hr />

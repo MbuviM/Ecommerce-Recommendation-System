@@ -5,15 +5,15 @@ import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
-};
-
+    apiKey: "AIzaSyAlYi1aRw8p4kAE9KBP5sFwCAGkPDuoG3E",
+    authDomain: "dapper-ecommerce.firebaseapp.com",
+    projectId: "dapper-ecommerce",
+    storageBucket: "dapper-ecommerce.firebasestorage.app",
+    messagingSenderId: "769404425680",
+    appId: "1:769404425680:web:5bf37375ae9c67a8f595d5",
+    measurementId: "G-558YEVK1ZM"
+  };
+  
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 

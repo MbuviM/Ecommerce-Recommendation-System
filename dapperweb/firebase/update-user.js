@@ -1,63 +1,99 @@
-import { firebase, auth, db } from "../config/firebase";
+import { auth, db, storage } from "../config/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 
-function updateUser({ email, name, surname, phoneNumber, photo, finalEvent }) {
-  const currentUser = auth.currentUser.uid;
-
-  if (photo) {
-    return firebase
-      .storage()
-      .ref("images/" + currentUser + (photo?.name || "0"))
-      .put(photo)
-      .then((doc) => {
-        doc.ref.getDownloadURL().then((url) => {
-          db.collection("Users")
-            .doc(currentUser)
-            .update({
-              name,
-              surname,
-              email,
-              phoneNumber: phoneNumber || "",
-              photoUrl: url,
-            })
-            .catch((e) => console.log(e))
-            .finally(() => finalEvent());
-        });
-      })
-      .catch((e) => console.log(e));
+async function updateUser({ email, name, surname, phoneNumber, photo, finalEvent }) {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    console.error("No authenticated user found");
+    throw new Error("No authenticated user found");
   }
+  
+  console.log("Current user UID:", currentUser.uid);
 
-  return db
-    .collection("Users")
-    .doc(currentUser)
-    .update({
-      name,
-      surname,
-      email,
-      phoneNumber: phoneNumber || "",
-    });
+  try {
+    const userDoc = doc(db, "Users", currentUser.uid);
+    const userSnap = await getDoc(userDoc);
+    
+    console.log("User document exists:", userSnap.exists());
+    console.log("User document data:", userSnap.data());
+    
+    if (!userSnap.exists()) {
+      console.error("User document not found");
+      throw new Error("User document not found");
+    }
+
+    if (photo) {
+      try {
+        console.log("Uploading photo to storage");
+        const storageRef = ref(storage, `images/${currentUser.uid}${photo?.name || "0"}`);
+        const snapshot = await uploadBytes(storageRef, photo);
+        const url = await getDownloadURL(snapshot.ref);
+        
+        console.log("Photo uploaded, updating user document");
+        await updateDoc(userDoc, {
+          name,
+          surname,
+          email,
+          phoneNumber: phoneNumber || "",
+          photoUrl: url,
+        });
+        
+        console.log("User document updated with photo");
+        finalEvent?.();
+      } catch (error) {
+        console.error("Error updating user with photo:", error);
+        throw error;
+      }
+    } else {
+      try {
+        console.log("Updating user document without photo");
+        await updateDoc(userDoc, {
+          name,
+          surname,
+          email,
+          phoneNumber: phoneNumber || "",
+        });
+        console.log("User document updated successfully");
+      } catch (error) {
+        console.error("Error updating user:", error);
+        throw error;
+      }
+    }
+  } catch (error) {
+    console.error("Error in updateUser function:", error);
+    throw error;
+  }
 }
 
-function updatePassword({ currentPassword, newPassword }) {
+async function updatePasswordHelper({ currentPassword, newPassword }) {
   const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error("No authenticated user found");
+  }
 
-  const credential = firebase.auth.EmailAuthProvider.credential(
-    firebase.auth().currentUser.email,
+  const credential = EmailAuthProvider.credential(
+    currentUser.email,
     currentPassword
   );
 
-  const update = () => {
-    return currentUser
-      .updatePassword(newPassword)
-      .then(function () {
-        // Update successful.
-      })
-      .catch(function (error) {
-        // An error happened.
-      });
+  const reauth = async () => {
+    try {
+      await reauthenticateWithCredential(currentUser, credential);
+    } catch (error) {
+      console.error("Reauthentication error:", error);
+      throw error;
+    }
   };
 
-  const reauth = () => {
-    return currentUser.reauthenticateWithCredential(credential);
+  const update = async () => {
+    try {
+      await updatePassword(currentUser, newPassword);
+    } catch (error) {
+      console.error("Password update error:", error);
+      throw error;
+    }
   };
 
   return {
@@ -66,4 +102,4 @@ function updatePassword({ currentPassword, newPassword }) {
   };
 }
 
-export { updateUser, updatePassword };
+export { updateUser, updatePasswordHelper as updatePassword };

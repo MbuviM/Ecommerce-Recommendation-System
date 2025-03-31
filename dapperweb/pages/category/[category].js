@@ -1,12 +1,12 @@
-import Head from "next/head";
-
-import styles from "./category.module.scss";
-
-import Layout from "components/Layout";
-import { useAuth } from "@/firebase/context";
+import React from "react";
 import { db } from "@/config/firebase";
+import { collection, query, where, limit, getDocs } from "firebase/firestore";
+import Head from "next/head";
+import styles from "./category.module.scss";
+import Layout from "components/Layout";
 import Button from "@/components/FilterButton";
 import ProductCard from "@/components/ProductCard/product-card";
+import { useAuth } from "@/firebase/context";
 
 const getEmoji = {
   Apparel: "👚",
@@ -74,31 +74,34 @@ export default function Category({ data, query }) {
 }
 
 Category.getInitialProps = async function ({ query }) {
-  let data = {};
-  let error = {};
-  console.log(query)
-  let formattedName = query.category
-  console.log(formattedName)
-  if(query.category.includes("_")) {
-    formattedName = query.category.replace("_", " ")
-  }
+  try {
+    let formattedName = query.category;
+    if (query.category.includes("_")) {
+      formattedName = query.category.replace("_", " ");
+    }
 
-  await db
-    .collection("Products")
-    .where("masterCategory", "==", formattedName)
-    .limit(30)
-    .get()    
-    .then(function (querySnapshot) {
-      const products = querySnapshot.docs.map(function (doc) {
-        return { id: doc.id, ...doc.data() };
-      });
-      data = products;
-    })
-    .catch((e) => (error = e));
-    console.log(data)
-  return {
-    data,
-    error,
-    query,
-  };
+    const productsRef = collection(db, "Products");
+    const q = query(
+      productsRef,
+      where("masterCategory", "==", formattedName),
+      limit(30)
+    );
+    const querySnapshot = await getDocs(q);
+    const data = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    return {
+      data,
+      query,
+    };
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return {
+      data: [],
+      error,
+      query,
+    };
+  }
 };

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import Head from "next/head";
 import styles from "./index.module.scss";
 
@@ -6,7 +7,7 @@ import HorizontalCard from "components/HomeCard/horizontal-card";
 import VerticalCard from "components/HomeCard/vertical-card";
 import Products from "components/HomeProducts";
 
-import { db } from "config/firebase";
+import { db } from "@/firebase/config";
 import Layout from "components/Layout";
 
 import { useAuth } from "../firebase/context";
