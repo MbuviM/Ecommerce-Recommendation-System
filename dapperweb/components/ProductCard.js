@@ -15,8 +15,10 @@ const ProductCard = ({ product }) => {
     e.stopPropagation();
     e.preventDefault();
     addToCart(product);
-    // Optional: show some success feedback
-    alert(`Added ${product.name} to cart!`);
+    // Automatic cart addition with error handling
+    if (!isInCart) {
+      router.push('/cart');
+    }
   };
 
   const goToProductPage = () => {
@@ -24,10 +26,10 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className={styles.productCard} onClick={goToProductPage}>
+    <Link href={`/product/${product.id}`} className={styles.productCard}>
       <div className={styles.imageContainer}>
         <img 
-          src={product.imageUrl || 'https://via.placeholder.com/300'} 
+          src={product.imageUrl || '/african-default.jpg'} 
           alt={product.name} 
           className={styles.productImage}
         />
@@ -42,8 +44,8 @@ const ProductCard = ({ product }) => {
           {isInCart ? `Add More (${currentQuantity} in cart)` : 'Add to Cart'}
         </button>
       </div>
-    </div>
+    </Link>
   );
 };
 
-export default ProductCard; 
+export default ProductCard;

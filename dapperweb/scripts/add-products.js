@@ -4,7 +4,7 @@ const products = [
   {
     productDisplayName: "Classic White T-Shirt",
     price: 29.99,
-    link: "https://i.ibb.co/wL3nWkm/Pngtree-memphis-style-line-point-line-3797599.png",
+    link: "https://example.com/ai-images/african-tshirt-design.jpg",
     sellers: "Dapper Wear",
     gender: "Men",
     masterCategory: "Clothing",
@@ -13,7 +13,7 @@ const products = [
   {
     productDisplayName: "Denim Jacket",
     price: 89.99,
-    link: "https://i.ibb.co/ZK2L8cg/kisspng-fashion-model-hugo-boss-pinpoint-resource-of-oklah-mens-fashion-5a78e637c1bde9-3434957015178.png",
+    link: "https://example.com/ai-images/african-denim-jacket.jpg",
     sellers: "Dapper Wear",
     gender: "Men",
     masterCategory: "Clothing",
@@ -22,7 +22,7 @@ const products = [
   {
     productDisplayName: "Summer Dress",
     price: 59.99,
-    link: "https://i.ibb.co/xmJdGXD/kisspng-slip-dress-clothing-casual-fashion-model-5abb4a319d2986-8864671115222236656438.png",
+    link: "https://example.com/ai-images/african-print-dress.jpg",
     sellers: "Dapper Wear",
     gender: "Women",
     masterCategory: "Clothing",
@@ -31,7 +31,7 @@ const products = [
   {
     productDisplayName: "Leather Sneakers",
     price: 79.99,
-    link: "https://i.ibb.co/0yKq1HK/kindpng-4043322.png",
+    link: "https://example.com/ai-images/african-tribal-sneakers.jpg",
     sellers: "Dapper Wear",
     gender: "Unisex",
     masterCategory: "Footwear",
@@ -40,7 +40,7 @@ const products = [
   {
     productDisplayName: "Designer Handbag",
     price: 129.99,
-    link: "https://i.ibb.co/68XpWPB/pngkey-com-ladies-purse-png-2499694.png",
+    link: "https://example.com/ai-images/african-beaded-handbag.jpg",
     sellers: "Dapper Wear",
     gender: "Women",
     masterCategory: "Accessories",
@@ -64,4 +64,4 @@ async function addProducts() {
 }
 
 // Run the function
-addProducts(); 
+addProducts();

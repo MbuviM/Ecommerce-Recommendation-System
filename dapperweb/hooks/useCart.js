@@ -153,6 +153,40 @@ export default function useCart() {
     }
   };
 
+  const addChatbotToCart = async (productData) => {
+    try {
+      const product = {
+        id: productData.id,
+        name: productData.name,
+        price: productData.price,
+        imageUrl: productData.imageUrl
+      };
+
+      setCart(prevCart => {
+        const newCart = { ...prevCart };
+        if (newCart[product.id]) {
+          newCart[product.id].quantity += 1;
+        } else {
+          newCart[product.id] = { ...product, quantity: 1 };
+        }
+        localStorage.setItem('anonymousCart', JSON.stringify(newCart));
+        return newCart;
+      });
+
+      if (user) {
+        const userDoc = doc(db, "Users", user.uid);
+        await updateDoc(userDoc, {
+          cart: cart
+        });
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Chatbot cart add error:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   // Remove item from cart
   const removeFromCart = async (productId) => {
     console.log("Removing from cart:", productId);
@@ -269,4 +303,4 @@ export default function useCart() {
     clearCart,
     isAuthenticated: !!user
   };
-} 
+}

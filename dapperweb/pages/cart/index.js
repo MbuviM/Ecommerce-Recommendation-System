@@ -13,9 +13,13 @@ import { useRouter } from "next/router";
 
 export default function CartPage() {
   const { user, loading } = useAuth();
-  const { data } = useCart();
+  const { data = {} } = useCart();
+  const [clientData, setClientData] = useState({});
+  useEffect(() => {
+    setClientData(data);
+  }, [data]);
 
-  const cartLength = Object.keys(data).reduce((a, b) => a + data[b].length, 0);
+  const cartLength = Object.keys(clientData).reduce((a, b) => a + clientData[b].length, 0);
 
   const cartItems =
     cartLength > 0
@@ -54,12 +58,12 @@ export default function CartPage() {
   const addCartEvent = (id, size) => {
     const newCart = size
       ? {
-          ...data,
-          [id]: data.hasOwnProperty(id) ? [...data[id], size] : [size],
+          ...clientData,
+          [id]: clientData.hasOwnProperty(id) ? [...clientData[id], size] : [size],
         }
       : {
-          ...data,
-          [id]: data.hasOwnProperty(id) ? [...data[id], "-"] : ["-"],
+          ...clientData,
+          [id]: clientData.hasOwnProperty(id) ? [...clientData[id], "-"] : ["-"],
         };
     addToCart(newCart);
   };
