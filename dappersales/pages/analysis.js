@@ -13,8 +13,9 @@ import {
   Legend
 } from 'chart.js';
 import styles from '../styles/analysis.module.css';
-import Logoutscreen from '../components/Logoutscreen';
 import { useRouter } from 'next/router';
+import { db } from "../Firebase.js";
+import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
 
 // Register ChartJS components
 ChartJS.register(
@@ -29,143 +30,153 @@ ChartJS.register(
   Legend
 );
 
-// Function to generate random data
-const generateRandomData = () => {
-  // Generate random product count between 80 and 150
-  const productCount = Math.floor(Math.random() * 70) + 80;
-  
-  // Generate random total sales between $10,000 and $50,000
-  const totalSales = (Math.random() * 40000 + 10000).toFixed(2);
-  
-  // Generate random average order value between $50 and $200
-  const averageOrderValue = (Math.random() * 150 + 50).toFixed(2);
-  
-  // Generate category data
-  const categories = [
-    'Shirts', 'Pants', 'Shoes', 'Accessories', 'Outerwear', 'Formal'
-  ];
-  
-  const categoryValues = categories.map(() => Math.floor(Math.random() * 30) + 5);
-  const categorySalesValues = categories.map(() => Math.floor(Math.random() * 5000) + 1000);
-  
-  const categoryChartData = {
-    labels: categories,
-    datasets: [
-      {
-        label: 'Products Count',
-        data: categoryValues,
-        backgroundColor: [
-          'rgb(255, 99, 132)',
-          'rgb(54, 162, 235)',
-          'rgb(255, 205, 86)',
-          'rgb(75, 192, 192)',
-          'rgb(153, 102, 255)',
-          'rgb(255, 159, 64)'
-        ]
-      }
-    ]
-  };
-  
-  const categoryPerformanceData = {
-    labels: categories,
-    datasets: [
-      {
-        label: 'Sales by Category ($)',
-        data: categorySalesValues,
-        backgroundColor: 'rgba(54, 162, 235, 0.6)'
-      }
-    ]
-  };
-  
-  // Generate monthly sales data
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  const monthlySalesData = {
-    labels: months,
-    datasets: [
-      {
-        label: 'Monthly Sales ($)',
-        data: months.map(() => Math.floor(Math.random() * 10000) + 3000),
-        fill: false,
-        borderColor: 'rgb(75, 192, 192)',
-        tension: 0.1
-      }
-    ]
-  };
-  
-  // Generate top products
-  const topProducts = [
-    {
-      id: '1',
-      name: 'Premium Denim Jacket',
-      quantity: Math.floor(Math.random() * 100) + 50,
-      revenue: Math.floor(Math.random() * 2000) + 1000,
-      imageUrl: 'https://via.placeholder.com/100x100'
-    },
-    {
-      id: '2',
-      name: 'Classic White Shirt',
-      quantity: Math.floor(Math.random() * 100) + 50,
-      revenue: Math.floor(Math.random() * 2000) + 1000,
-      imageUrl: 'https://via.placeholder.com/100x100'
-    },
-    {
-      id: '3',
-      name: 'Slim Fit Chinos',
-      quantity: Math.floor(Math.random() * 100) + 50,
-      revenue: Math.floor(Math.random() * 2000) + 1000,
-      imageUrl: 'https://via.placeholder.com/100x100'
-    },
-    {
-      id: '4',
-      name: 'Leather Belt',
-      quantity: Math.floor(Math.random() * 100) + 50,
-      revenue: Math.floor(Math.random() * 2000) + 1000,
-      imageUrl: 'https://via.placeholder.com/100x100'
-    },
-    {
-      id: '5',
-      name: 'Oxford Dress Shoes',
-      quantity: Math.floor(Math.random() * 100) + 50,
-      revenue: Math.floor(Math.random() * 2000) + 1000,
-      imageUrl: 'https://via.placeholder.com/100x100'
-    }
-  ];
-  
-  return {
-    productCount,
-    totalSales,
-    averageOrderValue,
-    categoryData: categoryChartData,
-    categoryPerformanceData,
-    salesData: monthlySalesData,
-    topProducts
-  };
-};
-
 const Analysis = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
+  const [data, setData] = useState({
+    productCount: 0,
+    totalSales: 0,
+    averageOrderValue: 0,
+    categoryData: null,
+    categoryPerformanceData: null,
+    salesData: null,
+    topProducts: []
+  });
   const router = useRouter();
   
-  // Generate random data
+  // Fetch data from Firestore
   useEffect(() => {
-    if (!user) return;
-    
-    // Simulate loading delay
-    const loadData = setTimeout(() => {
+    const fetchData = async () => {
       try {
-        const randomData = generateRandomData();
-        setData(randomData);
+        setLoading(true);
+        
+        // 1. Fetch product count (public data)
+        const productsCol = collection(db, 'fashion');
+        const productSnapshot = await getDocs(productsCol);
+        const productCount = productSnapshot.size;
+        
+        // Initialize default values for authenticated-only data
+        let totalSales = 0;
+        let orderCount = 0;
+        const categorySales = {};
+        const monthlySales = {};
+        const productSales = {};
+        
+        // Only fetch order data if user is authenticated
+        if (user) {
+          // 2. Fetch orders data for sales calculations
+          const ordersCol = collection(db, 'Orders');
+          const ordersQuery = query(ordersCol);
+          const ordersSnapshot = await getDocs(ordersQuery);
+          
+          ordersSnapshot.forEach(doc => {
+            const order = doc.data();
+            const orderDate = order.createdAt?.toDate();
+            const month = orderDate?.toLocaleString('default', { month: 'short' });
+            
+            // Calculate total sales
+            totalSales += order.total || 0;
+            orderCount++;
+            
+            // Aggregate by month
+            if (month) {
+              monthlySales[month] = (monthlySales[month] || 0) + (order.total || 0);
+            }
+            
+            // Aggregate by category and product
+            order.items?.forEach(item => {
+              // Category sales
+              if (item.category) {
+                categorySales[item.category] = (categorySales[item.category] || 0) + (item.price * item.quantity || 0);
+              }
+              
+              // Product sales (for top products)
+              if (item.id) {
+                if (!productSales[item.id]) {
+                  productSales[item.id] = {
+                    id: item.id,
+                    name: item.name || 'Unknown Product',
+                    quantity: 0,
+                    revenue: 0,
+                    imageUrl: item.imageUrl || 'https://via.placeholder.com/100x100'
+                  };
+                }
+                productSales[item.id].quantity += item.quantity || 0;
+                productSales[item.id].revenue += (item.price * item.quantity) || 0;
+              }
+            });
+          });
+        }
+        
+        // Calculate average order value (0 if not authenticated)
+        const averageOrderValue = user && orderCount > 0 ? (totalSales / orderCount).toFixed(2) : 0;
+        
+        // Prepare category data (show basic data for all users)
+        const categories = user ? Object.keys(categorySales) : ['Shirts', 'Pants', 'Shoes', 'Accessories'];
+        const categoryChartData = {
+          labels: categories,
+          datasets: [{
+            label: 'Products Count',
+            data: categories.map(() => Math.floor(Math.random() * 30) + 5),
+            backgroundColor: [
+              'rgb(255, 99, 132)',
+              'rgb(54, 162, 235)',
+              'rgb(255, 205, 86)',
+              'rgb(75, 192, 192)',
+              'rgb(153, 102, 255)',
+              'rgb(255, 159, 64)'
+            ]
+          }]
+        };
+        
+        const categoryPerformanceData = {
+          labels: categories,
+          datasets: [{
+            label: 'Sales by Category ($)',
+            data: user ? categories.map(cat => categorySales[cat]) : categories.map(() => Math.floor(Math.random() * 5000) + 1000),
+            backgroundColor: 'rgba(54, 162, 235, 0.6)'
+          }]
+        };
+        
+        // Prepare monthly sales data
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const salesData = {
+          labels: months,
+          datasets: [{
+            label: 'Monthly Sales ($)',
+            data: user ? months.map(month => monthlySales[month] || 0) : months.map(() => Math.floor(Math.random() * 10000) + 3000),
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }]
+        };
+        
+        // Prepare top products (empty array if not authenticated)
+        const topProducts = user 
+          ? Object.values(productSales)
+              .sort((a, b) => b.revenue - a.revenue)
+              .slice(0, 5)
+          : [];
+        
+        setData({
+          productCount,
+          totalSales: user ? totalSales.toFixed(2) : '0',
+          averageOrderValue,
+          categoryData: categoryChartData,
+          categoryPerformanceData,
+          salesData,
+          topProducts
+        });
+        
         setLoading(false);
       } catch (err) {
-        console.error('Error generating data:', err);
+        console.error('Error fetching analytics data:', err);
         setError(err.message);
         setLoading(false);
       }
-    }, 1000); // 1 second loading delay for realism
+    };
     
-    return () => clearTimeout(loadData);
+    fetchData();
   }, [user]);
 
   // Options for charts
@@ -181,11 +192,6 @@ const Analysis = ({ user }) => {
       }
     }
   };
-
-  // If user is not authenticated, show login screen
-  if (!user) {
-    return <Logoutscreen />;
-  }
 
   // Show loading state
   if (loading) {
@@ -210,23 +216,28 @@ const Analysis = ({ user }) => {
   return (
     <div className={styles.analysisContainer}>
       <h1>Dapper Wear Analytics Dashboard</h1>
+    
       
       <div className={styles.statsOverview}>
         <div className={styles.statCard}>
           <h3>Total Products</h3>
           <p className={styles.statNumber}>{data.productCount}</p>
         </div>
-        <div className={styles.statCard}>
-          <h3>Total Sales</h3>
-          <p className={styles.statNumber}>${data.totalSales}</p>
-        </div>
-        <div className={styles.statCard}>
-          <h3>Average Order Value</h3>
-          <p className={styles.statNumber}>${data.averageOrderValue}</p>
-        </div>
+        {user && (
+          <>
+            <div className={styles.statCard}>
+              <h3>Total Sales</h3>
+              <p className={styles.statNumber}>${data.totalSales}</p>
+            </div>
+            <div className={styles.statCard}>
+              <h3>Average Order Value</h3>
+              <p className={styles.statNumber}>${data.averageOrderValue}</p>
+            </div>
+          </>
+        )}
       </div>
       
-      {data.topProducts.length > 0 && (
+      {user && data.topProducts.length > 0 && (
         <div className={styles.topProductsSection}>
           <h2>Top Selling Products</h2>
           <div className={styles.topProductsGrid}>
@@ -270,31 +281,34 @@ const Analysis = ({ user }) => {
             <div>No category data available</div>
           )}
         </div>
-        <div className={styles.chartCard}>
-          <h2>Category Performance</h2>
-          {data.categoryPerformanceData ? (
-            <Bar data={data.categoryPerformanceData} options={options} />
-          ) : (
-            <div>No category performance data available</div>
-          )}
-        </div>
+        {user && (
+          <div className={styles.chartCard}>
+            <h2>Category Performance</h2>
+            {data.categoryPerformanceData ? (
+              <Bar data={data.categoryPerformanceData} options={options} />
+            ) : (
+              <div>No category performance data available</div>
+            )}
+          </div>
+        )}
       </div>
       
-      {/* Refresh Data Button */}
-      <div className={styles.refreshSection}>
-        <button 
-          className={styles.refreshButton} 
-          onClick={() => {
-            setLoading(true);
-            setTimeout(() => {
-              setData(generateRandomData());
-              setLoading(false);
-            }, 500);
-          }}
-        >
-          Refresh Data
-        </button>
-      </div>
+      {user && (
+        <div className={styles.refreshSection}>
+          <button 
+            className={styles.refreshButton} 
+            onClick={() => {
+              setLoading(true);
+              setTimeout(() => {
+                setLoading(false);
+              }, 500);
+            }}
+            disabled={loading}
+          >
+            {loading ? 'Refreshing...' : 'Refresh Data'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
