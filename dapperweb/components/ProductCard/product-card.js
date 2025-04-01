@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-
 import styles from "./product.module.scss";
 import HeartIcon from "@/icons/heart";
 import Link from "next/link";
@@ -7,6 +6,7 @@ import HeartFilled from "@/icons/heart-filled";
 import { addFavorite, removeFavorite } from "@/firebase/product";
 import { useRouter } from "next/router";
 import { useAuth } from "@/firebase/context";
+import useCart from "@/hooks/useCart";
 
 export default function ProductCard({
   bgColor,
@@ -20,8 +20,10 @@ export default function ProductCard({
   ...props
 }) {
   const [isFavorite, setFavorite] = useState(favorite);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   const { user, loading } = useAuth();
+  const { addToCart } = useCart();
 
   const router = useRouter();
 
@@ -43,7 +45,27 @@ export default function ProductCard({
     console.log(target);
     target?.localName !== "button" &&
       typeof window !== "undefined" &&
-      router.push(`/${id}`);
+      router.push(`/product/${id}`);
+  };
+  
+  const handleAddToCart = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    const product = {
+      id,
+      name,
+      price: sale_price || price,
+      imageUrl: image,
+      brand
+    };
+    
+    addToCart(product);
+    setAddedToCart(true);
+    
+    setTimeout(() => {
+      setAddedToCart(false);
+    }, 2000);
   };
 
   return (
@@ -62,16 +84,24 @@ export default function ProductCard({
           <HeartIcon width={16} height={16} />
         )}
       </button>
-      <div className={styles.imageContainer}>
-        {image && <img className={styles.image} src={image} loading="lazy" />}
-      </div>
+      <button 
+        className={`${styles.cartButton} ${addedToCart ? styles.added : ''}`} 
+        onClick={handleAddToCart}
+      >
+        {addedToCart ? '✓ Added' : 'Add to Cart'}
+      </button>
+      <Link href={`/product/${id}`} className={styles.imageContainer}>
+        <img src={image} alt={name} />
+      </Link>
       <div className={styles.textContainer}>
         <div className={styles.brandWrapper}>
-          <Link href={`/brand/${brand}`}>
-            <a className={styles.brandLink}>{brand}</a>
+          <Link href={`/brand/${brand}`} className={styles.brandLink}>
+            {brand}
           </Link>
         </div>
-        <h4>{name}</h4>
+        <Link href={`/product/${id}`} className={styles.name}>
+          {name}
+        </Link>
         {sale_price ? (
           <div className={styles.priceContainer}>
             <div className={styles.discount}>

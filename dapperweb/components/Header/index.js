@@ -25,7 +25,8 @@ export default function Header() {
   const { user } = useAuth();
 
   const { data: cart } = useCart();
-  const cartLength = cart?.items?.length || 0;
+  // Calculate cart length based on the cart data structure from useCart.js
+  const cartLength = cart ? Object.keys(cart).length : 0;
 
   return (
     <nav className={styles.container}>

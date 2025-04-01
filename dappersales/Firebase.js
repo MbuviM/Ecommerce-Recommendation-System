@@ -1,5 +1,5 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 import {getAuth} from 'firebase/auth'
@@ -21,7 +21,21 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (error) {
+  // Check if the error is due to the app already being initialized
+  if (error.code === 'app/duplicate-app') {
+    console.log('Firebase app already initialized, using existing app');
+    // Use the existing app
+    app = getApps()[0];
+  } else {
+    console.error('Firebase initialization error:', error);
+    throw error;
+  }
+}
+
 // const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app)

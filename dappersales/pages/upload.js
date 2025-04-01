@@ -5,8 +5,12 @@ import {storage,db} from '../Firebase'
 import {v4} from 'uuid'
 import {collection,addDoc} from 'firebase/firestore'
 import {useRouter} from 'next/router'
+import ProtectedRoute from '../components/ProtectedRoute'
+import { useAuth } from '../context/AuthContext'
+import Head from 'next/head'
 
-const upload = ({user}) => {
+const Upload = () => {
+    const { currentUser: user } = useAuth()
     const [name, setName] = useState("")
     const [category, setCategory] = useState("")
     const [subcategory, setSubcategory] = useState("")
@@ -20,6 +24,10 @@ const upload = ({user}) => {
 
 
     const handleClick = async()=>{
+        if (!image) {
+            alert("Please select an image")
+            return
+        }
         const imgname = image.name + v4()
         const imageref = ref(storage,`images/${imgname}`)
 
@@ -37,10 +45,11 @@ const upload = ({user}) => {
                 link,
                 filename:imgname
               });
-              alert("Data uplodaded")
-               router.push('/')     
+              alert("Data uploaded successfully")
+              router.push('/')     
         }catch(err){
             console.log(err.message)
+            alert("Error uploading data: " + err.message)
         }
 
     }

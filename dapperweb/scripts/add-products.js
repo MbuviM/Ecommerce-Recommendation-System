@@ -1,4 +1,21 @@
-const { db } = require('../config/firebase');
+// Import Firebase v9 modules
+const { initializeApp } = require('firebase/app');
+const { getFirestore, collection, addDoc } = require('firebase/firestore');
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAlYi1aRw8p4kAE9KBP5sFwCAGkPDuoG3E",
+  authDomain: "dapper-ecommerce.firebaseapp.com",
+  projectId: "dapper-ecommerce",
+  storageBucket: "dapper-ecommerce.firebasestorage.app",
+  messagingSenderId: "769404425680",
+  appId: "1:769404425680:web:5bf37375ae9c67a8f595d5",
+  measurementId: "G-558YEVK1ZM"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 const products = [
   {
@@ -53,8 +70,9 @@ async function addProducts() {
   
   for (const product of products) {
     try {
-      await db.collection('Products').add(product);
-      console.log('Added product:', product.productDisplayName);
+      // Using Firebase v9 syntax to add to 'fashion' collection
+      const docRef = await addDoc(collection(db, 'fashion'), product);
+      console.log('Added product:', product.productDisplayName, 'with ID:', docRef.id);
     } catch (error) {
       console.error('Error adding product:', error);
     }

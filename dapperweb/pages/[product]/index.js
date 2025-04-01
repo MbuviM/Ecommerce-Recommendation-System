@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
-// import fetch from 'node-fetch';
 
-import { db, firebase } from "@/firebase/config";
+import { db } from "@/firebase/config";
 import { useAuth } from "@/firebase/context";
 import { useCart } from "hooks/cart.hook";
 import { removeFavorite, addFavorite, addToCart } from "@/firebase/product";
-import { collection, doc, documentId, query, where, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, query, where, documentId, getDocs } from "firebase/firestore";
 
 import styles from "./product.module.scss";
 
@@ -20,51 +19,49 @@ import { useRouter } from "next/router";
 import ProductCard from "@/components/ProductCard/product-card";
 
 export default function Product({ data, query }) {
-  if (!data.productData.productDisplayName) {
+  if (!data.productData || !data.productData.productDisplayName) {
     return <ErrorPage />;
   }
 
   const [selectedSize, setSelectedSize] = useState();
-  const [selectedPhoto, setSelectedPhoto] = useState(0);
   const [isFavorite, setFavorite] = useState(false);
-  const [recommendData, setRecommendData] = useState();
 
   const { user, loading } = useAuth();
-
   const router = useRouter();
 
-  // const {
-  //   seller,
-  //   link,
-  //   price,
-  //   product_name,
-  //   sale_price,
-  // } = data;
+  const product_data = data.productData;
+  const prod_id = product_data.id;
+  const product_name = product_data.productDisplayName;
+  const price = 142 + (product_data.price || 0); // Adding markup or using fallback
+  const sale_price = product_data.price || 0;
+  const image = product_data.link || "/placeholder-product.jpg"; // Fallback image
+  const gender = product_data.gender;
+  const masterCategory = product_data.masterCategory;
+  const subCategory = product_data.subCategory;
+  const articleType = product_data.articleType;
+  const baseColour = product_data.baseColour;
+  const season = product_data.season;
+  const usage = product_data.usage;
+  const year = product_data.year;
 
-  const product_data = data.productData
-  const prod_id = product_data.id
-  const product_name = product_data.productDisplayName
-  const price = product_data.price + 142
-  const sale_price = product_data.price
-  const image = product_data.link
-  const gender = product_data.gender
-  const masterCategory = product_data.masterCategory
-  const subCategory = product_data.subCategory
-  const sellers = product_data.sellers
-
-  const information = product_name + " " + gender + " " + masterCategory + " " + subCategory + " " + sellers
-
+  // Format product information to display relevant details
+  const information = `${gender}'s ${articleType} - ${baseColour}
+Color: ${baseColour}
+Category: ${masterCategory} > ${subCategory} > ${articleType}
+Usage: ${usage}
+Season: ${season} ${year}`;
 
   const id = query?.product;
 
   useEffect(() => {
-    user && setFavorite(user.favorites.includes(id));
-  }, [user]);
+    user && setFavorite(user.favorites?.includes(id));
+  }, [user, id]);
 
   const removeEvent = (id) => {
     removeFavorite(id);
     setFavorite(false);
   };
+  
   const addEvent = (id) => {
     addFavorite(id);
     setFavorite(true);
@@ -80,8 +77,6 @@ export default function Product({ data, query }) {
 
   const cart = useCart().data;
 
-  console.log(cart);
-
   const addCartEvent = () => {
     if (!user && !loading && typeof window !== "undefined")
       router.push("/login");
@@ -94,8 +89,8 @@ export default function Product({ data, query }) {
             : [selectedSize],
         };
         addToCart(newCart);
-      }
-      if (sizes?.length === 0) {
+      } else {
+        // If no size is selected or available
         const newCart = {
           ...cart,
           [id]: cart.hasOwnProperty(id) ? [...cart[id], "-"] : ["-"],
@@ -105,116 +100,33 @@ export default function Product({ data, query }) {
     }
   };
 
-  // const getProds = async () => {
-
-  //   const prodIds = await fetch(`http://localhost:5000/recommend?name=${image}&id=${prod_id}`,{
-      
-  //   }).then((res) => res.json())
-  //   console.log(`http://localhost:5000/recommend?name=${image}&id=${prod_id}`)
-  //   console.log(prodIds.result)
-    // await db  
-    // .collection("Products")
-    // .where(firebase.firestore.FieldPath.documentId(), "in", prodIds.result)
-    // .get()    
-    // .then(function (querySnapshot) {
-    //   const products = querySnapshot.docs.map(function (doc) {
-    //     return { id: doc.id, ...doc.data() };
-    //   });
-    //   setRecommendData(products)
-    // })
-    // .catch((e) => (error = e));
-    // const products = []
-    // prodIds.result.forEach(async p => {      
-    //   await db.collection("Products").doc(p).get().then((doc) => {
-    //     products.push({
-    //       id: doc.id,
-    //       ...doc.data()
-    //     })
-    //   })
-    // })
-    // db.collection("Products").doc(prodIds.result).get()
-    // .then(function (querySnapshot) {
-    //     products = querySnapshot.docs.map(function (doc) {
-    //       return { id: doc.id, ...doc.data() };
-    //     });
-    //     // recommendedProducts = products;
-    //   })
-    //   .catch((e) => (error = e));
-    
-    // .then((d) => {
-    //   products.push({
-    //     id: d.id,
-    //     ...d.data()
-    //   })
-    // })
-  //   console.log(products)
-  //   setRecommendData(products)
-  // }
-
-  // useEffect(() => {
-  //     getProds()
-  // },[])
-
   return (
     <Layout>
       <div className={styles.container}>
         <Head>
-          <title>Create Next App</title>
+          <title>{product_name} | Fashion Store</title>
           <link rel="icon" href="/favicon.ico" />
         </Head>
 
         <main className={styles.main}>
           <div className={styles.photosContainer}>
             <div className={styles.carouselContainer}>
-              <img src={image} loading="lazy" />
+              <img src={image} loading="lazy" alt={product_name} />
             </div>
-            {/* <div className={styles.smallPhotos}>
-              {photos.slice(0, 5).map((image, index) => {
-                return (
-                  <img
-                    key={index}
-                    src={image}
-                    className={styles.smallPhoto}
-                    style={{ borderColor: selectedPhoto === index && "black" }}
-                    onClick={() => setSelectedPhoto(index)}
-                    loading="lazy"
-                  />
-                );
-              })}
-            </div> */}
             <hr />
           </div>
           <div className={styles.productInfos}>
             <div className={styles.header}>
               <h1 className={styles.productTitle}>{product_name || ""}</h1>
-              <Link href={`/brand/${sellers}`}>{sellers || ""}</Link>
+              <div className={styles.categoryLabel}>{masterCategory} / {subCategory}</div>
             </div>
-            <span className={styles.priceText}>{price || 0}$</span>
+            <span className={styles.priceText}>{price}$</span>
             <div className={styles.saleContainer}>
-              <span className={styles.saleText}>{sale_price || 0}$</span>
+              <span className={styles.saleText}>{sale_price}$</span>
               <span className={styles.savedText}>
                 {"(You will be saved " + (price - sale_price) + "$!)"}
               </span>
             </div>
-            {/* <hr /> */}
-            {/* <div className={styles.sizes}>
-              <h4 className={styles.sizesText}>Sizes</h4>
-              {sizes.map((size) => {
-                return (
-                  <button
-                    key={size}
-                    className={styles.sizeButton}
-                    style={{
-                      borderColor: selectedSize === size && "black",
-                      fontWeight: selectedSize === size && "bold",
-                    }}
-                    onClick={() => setSelectedSize(size)}
-                  >
-                    {size}
-                  </button>
-                );
-              })}
-            </div> */}
             <hr />
             <div className={styles.buttons}>
               <Button style={{ margin: 0 }} onClick={addCartEvent}>
@@ -236,20 +148,20 @@ export default function Product({ data, query }) {
           </div>
         </main>
         <hr />
-        <div className={styles.recommendContainer} >
-        <h2>Similar Products</h2>
-        <div className={styles.products}>
+        <div className={styles.recommendContainer}>
+          <h2>Similar Products</h2>
+          <div className={styles.products}>
             {!loading && data.recommendedProducts &&
               data.recommendedProducts.map((product) => {
                 return (
                   <ProductCard
                     key={product.id}
                     id={product.id}
-                    brand={product.sellers}
+                    brand={product.sellers || product.masterCategory}
                     name={product.productDisplayName}
-                    image={product.link}
-                    price={product.price + 142}
-                    sale_price={product.price}
+                    image={product.link || "/placeholder-product.jpg"}
+                    price={(product.price || 0) + 142}
+                    sale_price={product.price || 0}
                     favorite={user?.favorites?.includes(product.id)}
                   />
                 );
@@ -263,73 +175,95 @@ export default function Product({ data, query }) {
 
 Product.getInitialProps = async function ({ query }) {
   let data = {};
-  let error = {};
-  let productData = {}
-  let recommendedProducts = {}
-  await db
-    .collection("Products")
-    .doc(query.product)
-    .get()
-    .then(function (doc) {
-      productData = { id: doc.id, ...doc.data() };
-    })
-    .catch((e) => (error = e));
-
-  // let recommendedProductsIds = ['9092', '10035','10279','10692']  
- 
-    const res = await fetch(`http://localhost:5000/recommend?name=${productData.link}&id=${productData.id}`)
-    const recommendedProductsIds = await res.json()
-    console.log(recommendedProductsIds.result)
-    const recommendIdStrings = []
-    recommendedProductsIds.result.forEach(r => {
-      recommendIdStrings.push(r.toString())
-    })
-    console.log("string ids, ",recommendIdStrings)
-    // recommendedProductsIds.result.forEach(async r => {
-    //   console.log(r)
-    //   await db.collection("Products").doc(r).get().then((d) => console.log("data #: ", d))
-    // })
-
-//     const refs = recommendedProductsIds.result.map(id => db.doc(`Products/${id}`))
-//     const snap = await db.getAll(...refs)
-// const products = snap.docs.map(function (doc) {
-//           return { id: doc.id, ...doc.data() };
-//         });
-//         recommendedProducts = products
-
-
-    await db  
-    .collection("Products")
-    .where(firebase.firestore.FieldPath.documentId(), "in", recommendIdStrings)
-    .get()    
-    .then(function (querySnapshot) {
-      const products = querySnapshot.docs.map(function (doc) {
-        return { id: doc.id, ...doc.data() };
-      });
-      recommendedProducts = products;
-    })
-    .catch((e) => (error = e));
-
-    console.log(recommendedProducts)
-
-    // const snap = await getDocs(query(collection(db, 'Products'), where(documentId(), "in", recommendedProductsIds.result)))
-    // const products = snap.docs.map(function (doc) {
-    //       return { id: doc.id, ...doc.data() };
-    //     });
-    //     recommendedProducts = products
-    // console.log(data)
+  let error = null;
+  let productData = {};
+  let recommendedProducts = [];
+  
+  try {
+    // Fetch the product details from the fashion database
+    const productDocRef = doc(db, "fashion", query.product);
+    const productDocSnap = await getDoc(productDocRef);
+    
+    if (productDocSnap.exists()) {
+      productData = { id: productDocSnap.id, ...productDocSnap.data() };
+      
+      // For recommended products - find products with same category, articleType, or gender
+      const productsRef = collection(db, "fashion");
+      
+      // Query for similar products
+      let similarQuery;
+      
+      if (productData.articleType) {
+        // Get products with same articleType (e.g., "Tshirts")
+        similarQuery = query(
+          productsRef, 
+          where("articleType", "==", productData.articleType),
+          where("id", "!=", productData.id)
+        );
+      } else if (productData.subCategory) {
+        // Fallback to subCategory
+        similarQuery = query(
+          productsRef, 
+          where("subCategory", "==", productData.subCategory),
+          where("id", "!=", productData.id)
+        );
+      } else {
+        // Last fallback to masterCategory
+        similarQuery = query(
+          productsRef, 
+          where("masterCategory", "==", productData.masterCategory),
+          where("id", "!=", productData.id)
+        );
+      }
+      
+      const recommendedSnapshot = await getDocs(similarQuery);
+      
+      // Limit to 4 recommended products
+      recommendedProducts = recommendedSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .slice(0, 4);
+      
+      // If recommendation API is working, uncomment this section
+      /* 
+      // Alternative approach using your recommendation API
+      const res = await fetch(`http://localhost:5000/recommend?id=${productData.id}`);
+      const recommendedProductsIds = await res.json();
+      
+      if (recommendedProductsIds && recommendedProductsIds.result) {
+        const recommendIdStrings = recommendedProductsIds.result.map(id => id.toString());
+        
+        // Fetch the recommended products from Firestore
+        const recommendedByIdQuery = query(
+          productsRef, 
+          where(documentId(), "in", recommendIdStrings)
+        );
+        
+        const recommendedByIdSnapshot = await getDocs(recommendedByIdQuery);
+        recommendedProducts = recommendedByIdSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      }
+      */
+      
+    } else {
+      console.error("Product not found");
+      error = "Product not found";
+    }
+    
+  } catch (e) {
+    console.error("Error fetching product data:", e);
+    error = e.message;
+  }
 
   data = {
     productData,
     recommendedProducts
-    // recommendedProductsIds: recommendedProductsIds.result
-  }
-
-  console.log(data)
+  };
 
   return {
     data,
     error,
     query,
   };
-};  
+};

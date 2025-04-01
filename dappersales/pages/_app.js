@@ -1,29 +1,25 @@
-import { useEffect, useState } from 'react'
 import '../styles/globals.css'
-import {onAuthStateChanged} from 'firebase/auth'
-import {auth} from '../Firebase.js'
 import Navbar from '../components/Navbar.js'
-
-
+import { AuthProvider } from '../context/AuthContext'
+import { useAuth } from '../context/AuthContext'
 
 function MyApp({ Component, pageProps }) {
+  return (
+    <AuthProvider>
+      <AppContent Component={Component} pageProps={pageProps} />
+    </AuthProvider>
+  )
+}
 
-  const [user,setUser] = useState(null)
-  useEffect(()=>{
-    onAuthStateChanged(auth,(user)=>{
-      if(user){
-        setUser(user)
-      }
-      else{
-        setUser(null)
-      }
-    })
-  },[])
-
-  return<> 
-  <Navbar user={user}/>
-  <Component {...pageProps} user={user} />
-  </>
+function AppContent({ Component, pageProps }) {
+  const { currentUser } = useAuth()
+  
+  return (
+    <>
+      <Navbar user={currentUser} />
+      <Component {...pageProps} user={currentUser} />
+    </>
+  )
 }
 
 export default MyApp

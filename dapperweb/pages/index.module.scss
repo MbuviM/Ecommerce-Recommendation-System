@@ -2,39 +2,52 @@
 
 .container {
   width: 100%;
+  background: var(--background);
+
   .main {
-    padding-bottom: 40px;
+    padding: 2rem 1.5rem;
+    max-width: 1440px;
+    margin: 0 auto;
+
     .header {
       display: flex;
-      margin-bottom: 40px;
       flex-direction: column;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--primary-light);
 
       @include md {
         flex-direction: row;
+        align-items: center;
+        gap: 2rem;
       }
 
       .title {
-        font-size: 28px;
+        font-size: 1.75rem;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
         margin: 0;
+        transition: var(--transition);
 
         .emoji {
           font-weight: 400;
-          font-family: apple color emoji, segoe ui emoji, noto color emoji,
-            android emoji, emojisymbols, emojione mozilla, twemoji mozilla,
-            segoe ui symbol;
-          margin-right: 10px;
+          margin-right: 0.75rem;
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
         }
       }
 
       .headerButtons {
         display: flex;
-        font-size: 14px;
-        font-weight: bold;
-        margin-top: 12px;
+        gap: 1rem;
+        align-items: center;
+        font-weight: 600;
+        color: var(--text-light);
 
         @include md {
           margin-left: auto;
-          margin-top: 0px;
+          margin-top: 0;
         }
       }
     }

@@ -10,3 +10,6 @@ datasets/*.csv
 .env.development.local
 .env.test.local
 .env.production.local
+dapper-ecommerce-firebase-adminsdk-fbsvc-34ba244e82.json
+script.js
+

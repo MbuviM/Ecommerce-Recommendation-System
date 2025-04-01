@@ -17,7 +17,7 @@ export default function LoginPage() {
     // Create a safety wrapper for auth state listener
     try {
       // Get auth directly to avoid potential issues with imported auth
-      const authInstance = getAuth();
+      const authInstance = auth;
       console.log("Auth instance:", authInstance ? "Valid" : "Invalid");
       
       // Store a flag in sessionStorage to track if this is an intentional login attempt

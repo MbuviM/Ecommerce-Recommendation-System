@@ -54,17 +54,18 @@
 
 .addToCartButton {
   width: 100%;
-  padding: 10px 0;
-  background-color: #5048E5;
-  color: white;
+  padding: 0.75rem;
+  background: var(--secondary);
+  color: var(--primary);
   border: none;
-  border-radius: 4px;
-  font-size: 14px;
+  border-radius: calc(var(--radius) - 4px);
   font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  
+  letter-spacing: 0.5px;
+  transition: var(--transition);
+
   &:hover {
-    background-color: #403ac2;
+    background: var(--primary);
+    color: var(--secondary);
+    transform: scale(0.98);
   }
-} 
+}

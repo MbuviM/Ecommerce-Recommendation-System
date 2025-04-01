@@ -36,11 +36,11 @@ export default function BrandPage({ data, query }) {
                   <ProductCard
                     key={product.id}
                     id={product.id}
-                    brand={product.brand}
-                    name={product.product_name}
-                    image={product.cover_photo}
-                    price={product.price}
-                    sale_price={product.sale_price}
+                    brand={product.brand || product.sellers || product.masterCategory}
+                    name={product.productDisplayName || product.product_name}
+                    image={product.link || product.cover_photo}
+                    price={(product.price || 0) + 142}
+                    sale_price={product.price || 0}
                     favorite={user?.favorites?.includes(product.id)}
                   />
                 );
@@ -54,9 +54,17 @@ export default function BrandPage({ data, query }) {
 
 BrandPage.getInitialProps = async function ({ query }) {
   try {
-    const productsRef = collection(db, "Products");
-    const q = query(productsRef, where("brand", "==", query.brand));
-    const querySnapshot = await getDocs(q);
+    const productsRef = collection(db, "fashion");
+    // First try to match by 'brand' field
+    let q = query(productsRef, where("brand", "==", query.brand));
+    let querySnapshot = await getDocs(q);
+    
+    // If no results, try matching by 'sellers' field which might contain brand info
+    if (querySnapshot.empty) {
+      q = query(productsRef, where("sellers", "==", query.brand));
+      querySnapshot = await getDocs(q);
+    }
+    
     const data = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()

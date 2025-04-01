@@ -6,7 +6,6 @@ const Logoutscreen = () => {
   return (
     <div className={styles.main}>
        <p className={styles.heading}>Welcome to Dapper Wear</p>
-       <p className={styles.subheading}>Please SignIn to access our features</p>
     </div>
   )
 }

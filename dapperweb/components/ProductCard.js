@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/router';
-import useCart from '../hooks/useCart';
+import { useCart } from '../hooks/cart.hook';
 import styles from './ProductCard.module.scss';
 
 const ProductCard = ({ product }) => {
@@ -8,17 +8,15 @@ const ProductCard = ({ product }) => {
   const { addToCart, cart } = useCart();
   
   // Check if product is already in cart
-  const isInCart = cart[product.id];
-  const currentQuantity = isInCart ? cart[product.id].quantity : 0;
+  const isInCart = cart.find(item => item.id === product.id);
+  const currentQuantity = isInCart ? isInCart.quantity : 0;
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
     e.preventDefault();
     addToCart(product);
     // Automatic cart addition with error handling
-    if (!isInCart) {
-      router.push('/cart');
-    }
+    router.push('/cart');
   };
 
   const goToProductPage = () => {

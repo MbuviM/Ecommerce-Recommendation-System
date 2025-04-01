@@ -17,11 +17,12 @@ export default function Favorites() {
   const userLoading = useAuth().loading;
 
   useEffect(() => {
-    user?.favorites.length > 0 &&
-      db
-        .collection("Products")
-        .get()
-        .then((querySnapshot) => {
+    if (user?.favorites && user.favorites.length > 0) {
+      const fetchFavorites = async () => {
+        try {
+          const productsRef = collection(db, "fashion");
+          const querySnapshot = await getDocs(productsRef);
+          
           setProducts(
             querySnapshot.docs
               .filter((item) => user.favorites.includes(item.id))
@@ -30,7 +31,14 @@ export default function Favorites() {
               })
           );
           setLoading(false);
-        });
+        } catch (error) {
+          console.error("Error fetching favorites:", error);
+          setLoading(false);
+        }
+      };
+      
+      fetchFavorites();
+    }
   }, [user]);
 
   if (!user && !userLoading) useRouter().push("/login");
@@ -47,11 +55,11 @@ export default function Favorites() {
                 <ProductCard
                   key={product.id}
                   id={product.id}
-                  brand={product.brand}
-                  name={product.product_name}
-                  image={product.cover_photo}
-                  price={product.price}
-                  sale_price={product.sale_price}
+                  brand={product.brand || product.sellers || product.masterCategory}
+                  name={product.productDisplayName || product.product_name}
+                  image={product.link || product.cover_photo}
+                  price={(product.price || 0) + 142}
+                  sale_price={product.price || 0}
                   favorite={user?.favorites?.includes(product.id)}
                 />
               );

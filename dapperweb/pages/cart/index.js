@@ -4,88 +4,31 @@ import styles from "./cart.module.scss";
 import Layout from "components/Layout";
 import dynamic from 'next/dynamic';
 const CartItem = dynamic(() => import('@/components/CartItem'), { ssr: false });
-import { useCart, useCartOnce } from "hooks/cart.hook";
+import { useCart } from "hooks/cart.hook";
 import React, { useEffect, useState } from "react";
-import { auth, db } from "@/config/firebase";
 import { useAuth } from "@/firebase/context";
-import { addToCart } from "@/firebase/product";
 import { useRouter } from "next/router";
 
 
 export default function CartPage() {
-  const { user, loading } = useAuth();
-  const { data = {} } = typeof window !== 'undefined' ? useCart() || {} : {};
-  const [clientData, setClientData] = useState({});
-  useEffect(() => {
-    setClientData(data);
-  }, [data]);
-
-  const cartLength = Object.keys(clientData).reduce((a, b) => a + clientData[b].length, 0);
-
-  const cartItems =
-    cartLength > 0
-      ? Object.keys(data)
-          .map((item) => {
-            return data[item].map((size) => {
-              return {
-                name: item,
-                size,
-              };
-            });
-          })
-          .flat(1)
-      : [];
-
-  const sizeCount = cartItems.reduce(
-    (acc, value) => ({
-      ...acc,
-      [value.name + "__size__" + value.size]:
-        (acc[value.name + "__size__" + value.size] || 0) + 1,
-    }),
-    {}
-  );
-
-  const cartItemsArray = cartItems.length > 0 
-  ? [
-      ...new Set(
-        cartItems.filter(
-          (v, i, a) =>
-            a.findIndex((t) => t.name === v.name && t.size === v.size) === i
-        )
-      )
-    ].map((item) => ({
-      ...item,
-      count: sizeCount[item.name + "__size__" + item.size] || 0
-    }))
-  : [];
-
-  const addCartEvent = (id, size) => {
-    const newCart = size
-      ? {
-          ...clientData,
-          [id]: clientData.hasOwnProperty(id) ? [...clientData[id], size] : [size],
-        }
-      : {
-          ...clientData,
-          [id]: clientData.hasOwnProperty(id) ? [...clientData[id], "-"] : ["-"],
-        };
-    addToCart(newCart);
-  };
-
+  const { currentUser, loading: authLoading } = useAuth();
+  const { cart, loading: cartLoading, updateQuantity, removeFromCart } = useCart();
   const router = useRouter();
-
-
-
-
-  if (!loading && !user && typeof window !== "undefined") router.push("/login");
-
-
+  
+  const loading = authLoading || cartLoading;
+  const cartLength = cart.reduce((total, item) => total + item.quantity, 0);
+  
+  useEffect(() => {
+    if (!authLoading && !currentUser) {
+      router.push('/login');
+    }
+  }, [currentUser, authLoading, router]);
 
   return (
     <Layout>
       <div className={styles.container}>
         <Head>
-          <title>Create Next App</title>
+          <title>Shopping Cart - Dapper Sales</title>
           <link rel="icon" href="/favicon.ico" />
         </Head>
 
@@ -94,17 +37,36 @@ export default function CartPage() {
             <h1 className={styles.title}>My Cart</h1>
             <h4>You have {cartLength} items in your cart</h4>
           </div>
-          {cartItemsArray.map((item, index) => {
-            return (
-              <CartItem
-                key={index}
-                id={item.name}
-                size={item.size}
-                count={item.count}
-                onAdd={addCartEvent}
-              />
-            );
-          })}
+          
+          {loading ? (
+            <p>Loading your cart...</p>
+          ) : cart.length === 0 ? (
+            <div className={styles.emptyCart}>
+              <p>Your cart is empty</p>
+              <button onClick={() => router.push('/')} className={styles.continueShoppingBtn}>
+                Continue Shopping
+              </button>
+            </div>
+          ) : (
+            <>
+              {cart.map((item) => (
+                <CartItem
+                  key={item.id}
+                  item={item}
+                  updateQuantity={updateQuantity}
+                  removeItem={removeFromCart}
+                />
+              ))}
+              
+              <div className={styles.cartSummary}>
+                <div className={styles.subtotal}>
+                  <span>Subtotal:</span>
+                  <span>${cart.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2)}</span>
+                </div>
+                <button className={styles.checkoutBtn}>Proceed to Checkout</button>
+              </div>
+            </>
+          )}
         </main>
       </div>
     </Layout>
