@@ -1,10 +1,11 @@
 import { auth } from "./config";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default async function emailLogin({ email, password }) {
   console.log("Login attempt with email:", email);
   
   try {
-    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
     console.log("Login successful for:", userCredential.user.email);
     return userCredential;
   } catch (error) {

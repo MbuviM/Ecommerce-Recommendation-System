@@ -10,6 +10,6 @@ datasets/*.csv
 .env.development.local
 .env.test.local
 .env.production.local
-dapper-ecommerce-firebase-adminsdk-fbsvc-34ba244e82.json
+dapper-wear-1b4b1-firebase-adminsdk-fbsvc-9f7393fd20.json
 script.js
 

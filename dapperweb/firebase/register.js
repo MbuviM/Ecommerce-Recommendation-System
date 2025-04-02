@@ -1,10 +1,12 @@
 import { auth, db } from "./config";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { collection, doc, setDoc } from 'firebase/firestore';
 
 async function emailRegister({ email, password }) {
   console.log("Registering user with email:", email);
   
   try {
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     console.log("User registered successfully with uid:", userCredential.user.uid);
     return userCredential;
   } catch (error) {
@@ -43,7 +45,8 @@ async function registerDatabase({ id, email, name, surname }) {
   
   try {
     // Create document in Users collection
-    await db.collection("Users").doc(id).set({
+    const userRef = doc(db, "Users", id);
+    await setDoc(userRef, {
       name,
       surname,
       email,
@@ -64,7 +67,9 @@ async function registerSellerDatabase({id, email, name}) {
   console.log("Creating seller document for:", id);
   
   try {
-    await db.collection("Users").doc(id).set({
+    // Create document in Users collection
+    const sellerRef = doc(db, "Users", id);
+    await setDoc(sellerRef, {
       name,
       email,
       products: [],

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext, createContext } from "react";
-import { firebase, auth, db } from "./config";
+import { auth, db } from "./config";
+import { collection, doc, getDoc } from "firebase/firestore";
 
 const authContext = createContext();
 
@@ -17,16 +18,22 @@ function useProvideAuth() {
   const [loading, setLoading] = useState(true);
 
   const getCurrentUser = () => {
-    auth.currentUser?.uid
-      ? db
-          .collection("Users")
-          .doc(auth.currentUser.uid)
-          .get()
-          .then((doc) => {
-            setUser(doc.data());
-            setLoading(false);
-          })
-      : setLoading(false);
+    if (auth.currentUser?.uid) {
+      const userDocRef = doc(db, "Users", auth.currentUser.uid);
+      getDoc(userDocRef)
+        .then((docSnap) => {
+          if (docSnap.exists()) {
+            setUser(docSnap.data());
+          }
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error getting user document:", error);
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

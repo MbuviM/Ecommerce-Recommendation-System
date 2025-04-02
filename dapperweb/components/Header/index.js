@@ -9,7 +9,7 @@ import ArrowIcon from "@/icons/arrow";
 
 import { useAuth } from "@/firebase/context";
 import { db, auth } from "@/firebase/config";
-import useCart from "@/hooks/cart.hook";
+import { useCart } from "@/hooks/cart.hook";
 import { useRouter } from "next/router";
 import MenuIcon from "@/icons/menu";
 import CameraIcon from "@/icons/camera";
@@ -24,9 +24,24 @@ export default function Header() {
 
   const { user } = useAuth();
 
-  const { data: cart } = useCart();
-  // Calculate cart length based on the cart data structure from useCart.js
-  const cartLength = cart ? Object.keys(cart).length : 0;
+  const { data } = useCart();
+  // Calculate cart length based on the cart data structure
+  const cartLength = data ? (
+    Array.isArray(data) 
+      ? data.length 
+      : Object.keys(data).reduce((total, productId) => {
+          // Check if the item has a quantity property (from useCart.js)
+          if (data[productId] && typeof data[productId].quantity === 'number') {
+            return total + data[productId].quantity;
+          }
+          // Check if the item is an array (from cart.hook.js)
+          else if (Array.isArray(data[productId])) {
+            return total + data[productId].length;
+          }
+          // Fallback to counting each key as one item
+          return total + 1;
+        }, 0)
+  ) : 0;
 
   return (
     <nav className={styles.container}>

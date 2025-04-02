@@ -90,7 +90,9 @@ async function setupSecurityRules() {
   `;
 
   // Note: Security rules need to be deployed through Firebase Console
+  // You can deploy rules using the Firebase CLI with: firebase deploy --only firestore:rules
   console.log('Security rules to be deployed:', rules);
+  console.log('To deploy these rules, use the Firebase CLI command: firebase deploy --only firestore:rules');
 }
 
 // Main setup function
@@ -106,4 +108,4 @@ async function setupFirebase() {
 }
 
 // Run the setup
-setupFirebase(); 
+setupFirebase();

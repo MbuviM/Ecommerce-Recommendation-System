@@ -27,7 +27,7 @@ service cloud.firestore {
     // Users collection (uppercase)
     match /Users/{userId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
       allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
     }
@@ -63,4 +63,4 @@ service cloud.firestore {
       allow write: if true;
     }
   }
-} 
+}

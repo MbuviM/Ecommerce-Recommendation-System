@@ -1,26 +1,24 @@
-// Import Firebase
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import 'firebase/compat/firestore';
+// Import Firebase modular SDK
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAlYi1aRw8p4kAE9KBP5sFwCAGkPDuoG3E",
-  authDomain: "dapper-ecommerce.firebaseapp.com",
-  projectId: "dapper-ecommerce",
-  storageBucket: "dapper-ecommerce.firebasestorage.app",
-  messagingSenderId: "769404425680",
-  appId: "1:769404425680:web:5bf37375ae9c67a8f595d5",
-  measurementId: "G-558YEVK1ZM"
+  apiKey: "AIzaSyD0SNIcn7JhsQoWneL90ZpKLGWGUSq7Ao0",
+  authDomain: "dapper-wear-1b4b1.firebaseapp.com",
+  projectId: "dapper-wear-1b4b1",
+  storageBucket: "dapper-wear-1b4b1.firebasestorage.app",
+  messagingSenderId: "1010498589131",
+  appId: "1:1010498589131:web:97b8d712647deb9780e64e",
+  measurementId: "G-ME2EPELH47"
 };
 
-// Initialize Firebase only if it hasn't been initialized
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Export the initialized services
-const auth = firebase.auth();
-const db = firebase.firestore();
+// Initialize Firebase services
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-export { firebase, auth, db };
+export { app, auth, db };
