@@ -3,9 +3,10 @@ import styles from './ChatInterface.module.scss';
 import ChatMessage from '../ChatMessage/ChatMessage';
 import { CHAT_STYLES } from '@/config/chatQuestions';
 
-export default function ChatInterface() {
+export default function ChatInterface({ onAddToCart }) {
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
+  const { data: cartData } = useCart();
 
   const handleQuestionClick = async (questionText) => {
     // Add user message
@@ -23,6 +24,10 @@ export default function ChatInterface() {
     setMessages(prev => [...prev, {
       id: Date.now(),
       text: 'Here are some curated suggestions based on your style preferences 🎉',
+      products: [
+        { id: '1', name: 'Product 1', price: 49.99 },
+        { id: '2', name: 'Product 2', price: 59.99 }
+      ],
       isBot: true,
       timestamp: new Date()
     }]);

@@ -25,23 +25,9 @@ export default function Header() {
   const { user } = useAuth();
 
   const { data } = useCart();
-  // Calculate cart length based on the cart data structure
-  const cartLength = data ? (
-    Array.isArray(data) 
-      ? data.length 
-      : Object.keys(data).reduce((total, productId) => {
-          // Check if the item has a quantity property (from useCart.js)
-          if (data[productId] && typeof data[productId].quantity === 'number') {
-            return total + data[productId].quantity;
-          }
-          // Check if the item is an array (from cart.hook.js)
-          else if (Array.isArray(data[productId])) {
-            return total + data[productId].length;
-          }
-          // Fallback to counting each key as one item
-          return total + 1;
-        }, 0)
-  ) : 0;
+  // Calculate cart length by summing up quantities of all items
+  const cartLength = data && typeof data === 'object' ? 
+    Object.values(data).reduce((total, item) => total + (item.quantity || 1), 0) : 0;
 
   return (
     <nav className={styles.container}>

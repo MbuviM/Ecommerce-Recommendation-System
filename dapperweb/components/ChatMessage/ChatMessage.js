@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './ChatMessage.module.scss';
 import { CHAT_QUESTIONS, CHAT_STYLES } from '@/config/chatQuestions';
 
-export default function ChatMessage({ messages, handleQuestionClick }) {
+export default function ChatMessage({ messages, handleQuestionClick, onAddToCart }) {
   return (
     <div 
       className={styles.chatContainer}
@@ -13,6 +13,16 @@ export default function ChatMessage({ messages, handleQuestionClick }) {
           key={msg.id}
           className={`${styles.messageRow} ${msg.isBot ? styles.bot : ''}`}
         >
+          {msg.products && (
+            <div className={styles.productList}>
+              {msg.products.map(product => (
+                <div key={product.id} className={styles.productItem}>
+                  <span>{product.name}</span>
+                  <button onClick={() => onAddToCart(product)}>Add to Cart</button>
+                </div>
+              ))}
+            </div>
+          )}
           <div 
             className={`${styles.messageBubble} ${msg.isBot ? styles.bot : styles.user}`}
             style={{ background: msg.isBot ? CHAT_STYLES.botBubble : CHAT_STYLES.userBubble }}
@@ -38,4 +48,6 @@ export default function ChatMessage({ messages, handleQuestionClick }) {
       </div>
     </div>
   );
-}
+} // Close ChatMessage component
+
+

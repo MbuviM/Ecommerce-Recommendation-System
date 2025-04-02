@@ -26,5 +26,35 @@
         font-weight: bold;
       }
     }
+
+    .emptyCart {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 0;
+      text-align: center;
+
+      p {
+        font-size: 18px;
+        margin-bottom: 20px;
+        color: #666;
+      }
+
+      .continueShoppingBtn {
+        padding: 10px 20px;
+        background-color: #000;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+
+        &:hover {
+          background-color: #333;
+        }
+      }
+    }
   }
 }

@@ -14,58 +14,16 @@ export default function CartPage() {
   const { user, loading } = useAuth();
   const { data } = useCart();
 
-  const cartLength = Object.keys(data).reduce((a, b) => a + data[b].length, 0);
-
-  const cartItems =
-    cartLength > 0
-      ? Object.keys(data)
-          .map((item) => {
-            return data[item].map((size) => {
-              return {
-                name: item,
-                size,
-              };
-            });
-          })
-          .flat(1)
-      : [];
-
-  const sizeCount = cartItems.reduce(
-    (acc, value) => ({
-      ...acc,
-      [value.name + "__size__" + value.size]:
-        (acc[value.name + "__size__" + value.size] || 0) + 1,
-    }),
-    {}
-  );
-
-  const cartItemsArray = [
-    ...new Set(
-      cartItems.filter(
-        (v, i, a) =>
-          a.findIndex((t) => t.name === v.name && t.size === v.size) === i
-      )
-    ),
-  ].map((item) => {
-    return { ...item, count: sizeCount[item.name + "__size__" + item.size] };
-  });
-
-  const addCartEvent = (id, size) => {
-    const newCart = size
-      ? {
-          ...data,
-          [id]: data.hasOwnProperty(id) ? [...data[id], size] : [size],
-        }
-      : {
-          ...data,
-          [id]: data.hasOwnProperty(id) ? [...data[id], "-"] : ["-"],
-        };
-    addToCart(newCart);
-  };
+  // Calculate cart length by summing up quantities of all items
+  const cartLength = data && typeof data === 'object' ? 
+    Object.values(data).reduce((total, item) => total + (item.quantity || 1), 0) : 0;
 
   const router = useRouter();
 
   if (!loading && !user && typeof window !== "undefined") router.push("/login");
+  
+  // Check if data is available and is an object
+  const hasItems = data && typeof data === 'object' && Object.keys(data).length > 0;
 
   return (
     <Layout>
@@ -80,17 +38,43 @@ export default function CartPage() {
             <h1 className={styles.title}>My Cart</h1>
             <h4>You have {cartLength} items in your cart</h4>
           </div>
-          {cartItemsArray.map((item, index) => {
-            return (
-              <CartItem
-                key={index}
-                id={item.name}
-                size={item.size}
-                count={item.count}
-                onAdd={addCartEvent}
-              />
-            );
-          })}
+          {hasItems ? (
+            Object.entries(data).map(([id, item]) => {
+              // Check if item has the necessary properties
+              if (!item || typeof item !== 'object') return null;
+              
+              return (
+                <CartItem
+                  key={id}
+                  item={{
+                    id: id,
+                    name: item.name || 'Product',
+                    price: item.price || 0,
+                    quantity: item.quantity || 1,
+                    imageUrl: item.imageUrl || item.cover_photo
+                  }}
+                  updateQuantity={(id, quantity) => {
+                    const newCart = { ...data };
+                    if (!newCart[id]) newCart[id] = {};
+                    newCart[id].quantity = quantity;
+                    addToCart(newCart);
+                  }}
+                  removeItem={(id) => {
+                    const newCart = { ...data };
+                    delete newCart[id];
+                    addToCart(newCart);
+                  }}
+                />
+              );
+            })
+          ) : (
+            <div className={styles.emptyCart}>
+              <p>Your cart is empty</p>
+              <button onClick={() => router.push('/')} className={styles.continueShoppingBtn}>
+                Continue Shopping
+              </button>
+            </div>
+          )}
         </main>
       </div>
     </Layout>
