@@ -1,42 +1,47 @@
 import React from "react";
-import { db } from "@/config/firebase";
-
 import Head from "next/head";
-
 import styles from "./search.module.scss";
-
 import Layout from "components/Layout";
 import Button from "@/components/FilterButton";
 import ProductCard from "@/components/ProductCard/product-card";
 import { useAuth } from "@/firebase/context";
 
-export default function SearchPage({ data, query }) {
+export default function SearchPage({ data = [], query, error = null }) {
   const { user, loading } = useAuth();
-
-  console.log(data, query);
 
   return (
     <Layout>
       <div className={styles.container}>
         <Head>
-          <title>Create Next App</title>
+          <title>Search Results for {query.text}</title>
           <link rel="icon" href="/favicon.ico" />
         </Head>
 
         <main className={styles.main}>
           <div className={styles.header}>
             <h1 className={styles.title}>
-              Listing {data.length} products for "{query.text}"
+              {error ? "Error loading results" : `Found ${data.length} items for "${query.text}"`}
             </h1>
             <div className={styles.headerButtons}>
               <Button type="sort" style={{ marginRight: 20 }} />
               <Button count={0} />
             </div>
           </div>
-          <div className={styles.products}>
-            {!loading && data &&
-              data.map((product) => {
-                return (
+
+          {error ? (
+            <div className={styles.error}>
+              <p>Couldn't load search results. Please try again.</p>
+              {process.env.NODE_ENV === 'development' && (
+                <details>
+                  <summary>Error details</summary>
+                  <pre>{error.message}</pre>
+                </details>
+              )}
+            </div>
+          ) : (
+            <div className={styles.products}>
+              {data.length > 0 ? (
+                data.map((product) => (
                   <ProductCard
                     key={product.id}
                     id={product.id}
@@ -47,9 +52,12 @@ export default function SearchPage({ data, query }) {
                     sale_price={product.price}
                     favorite={user?.favorites?.includes(product.id)}
                   />
-                );
-              })}
-          </div>
+                ))
+              ) : (
+                <p className={styles.noResults}>No matching products found.</p>
+              )}
+            </div>
+          )}
         </main>
       </div>
     </Layout>
@@ -57,33 +65,21 @@ export default function SearchPage({ data, query }) {
 }
 
 SearchPage.getInitialProps = async function ({ query }) {
-  let data = {};
-  let error = {};
-  // await db
-    // .collection("Products")
-    // .where("productDisplayName", "array-contains                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ", query.text)
-    // .get()
-    // .then(function (querySnapshot) {
-    //   // data = querySnapshot.docs
-    //   //   // .filter((item) => item.data().productDisplayName.includes(query.text) 
-    //   //   // || item.data().gender.includes(query.text)
-    //   //   // || item.data().masterCategory.includes(query.text) || item.data().subCategory.includes(query.text) 
-    //   //   // || item.data().sellers.includes(query.text)
-    //   //   )
-    //   //   .map(function (doc) {
-    //   //     return { id: doc.id, ...doc.data() };
-    //   //   });
-    // })
-    // .catch((e) => (error = e));
-    // console.log("data", data)
-
-  const res = await fetch(`http://localhost:5000/search?query=${query.text}`)
-  const result = await res.json()
-  console.log("search ,", result.searchResult)
-
-  return {
-    data,
-    error,
-    query,
-  };
+  try {
+    const res = await fetch(`/api/search?text=${encodeURIComponent(query.text)}`);
+    if (!res.ok) throw new Error(`Search failed: ${res.status}`);
+    const result = await res.json();
+    
+    return {
+      data: result.searchResult || [],
+      query
+    };
+  } catch (error) {
+    console.error("Search error:", error);
+    return {
+      data: [],
+      error: { message: error.message },
+      query
+    };
+  }
 };
